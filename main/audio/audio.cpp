@@ -9,7 +9,8 @@
 #include "ym_sample_decoder.h"
 
 //
-#include <FreeRTOS.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <driver/i2s.h>
 
 namespace audio
@@ -29,20 +30,20 @@ class InternalSpeakerOut
 {
     static constexpr i2s_port_t port_ = I2S_NUM_0;
 
-public:
+  public:
     InternalSpeakerOut()
     {
         i2s_config_t cfg{};
         cfg.mode =
             (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN);
-        cfg.sample_rate          = 62500;
-        cfg.bits_per_sample      = I2S_BITS_PER_SAMPLE_16BIT;
-        cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
+        cfg.sample_rate = 62500;
+        cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+        cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
         cfg.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S_MSB);
-        cfg.intr_alloc_flags     = 0;
-        cfg.dma_buf_count        = 4;
-        cfg.dma_buf_len          = 128;
-        cfg.use_apll             = false;
+        cfg.intr_alloc_flags = 0;
+        cfg.dma_buf_count = 4;
+        cfg.dma_buf_len = 128;
+        cfg.use_apll = false;
 
         auto r = i2s_driver_install(port_, &cfg, 0, nullptr);
         assert(r == ESP_OK);
@@ -50,13 +51,13 @@ public:
         i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
     }
 
-    void write(uint16_t* data, int n)
+    void write(uint16_t *data, int n)
     {
         size_t writeBytes;
         i2s_write(port_, data, n * 4, &writeBytes, portMAX_DELAY);
     }
 
-    static InternalSpeakerOut& instance()
+    static InternalSpeakerOut &instance()
     {
         static InternalSpeakerOut inst;
         return inst;
@@ -68,24 +69,24 @@ class FMOutputHandler
     static constexpr i2s_port_t port_ = I2S_NUM_1;
     //    QueueHandle_t queue_;
 
-public:
+  public:
     FMOutputHandler();
     ~FMOutputHandler();
 
     void setSampleRate(uint32_t sampleRate);
 
-    void read(uint32_t* buf, size_t size);
+    void read(uint32_t *buf, size_t size);
 
-    static FMOutputHandler& instance()
+    static FMOutputHandler &instance()
     {
         static FMOutputHandler inst;
         return inst;
     }
 
-private:
-    static void receiveTaskEntry(void* p)
+  private:
+    static void receiveTaskEntry(void *p)
     {
-        ((FMOutputHandler*)p)->receiveTask();
+        ((FMOutputHandler *)p)->receiveTask();
     }
     void receiveTask();
 };
@@ -96,7 +97,7 @@ FMOutputHandler::FMOutputHandler()
 
     {
         i2s_config_t cfg{};
-        cfg.mode        = i2s_mode_t(I2S_MODE_SLAVE | I2S_MODE_RX);
+        cfg.mode = i2s_mode_t(I2S_MODE_SLAVE | I2S_MODE_RX);
         cfg.sample_rate = sampleRate;
         // cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;
         cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
@@ -109,8 +110,8 @@ FMOutputHandler::FMOutputHandler()
         cfg.communication_format =
             i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB);
         cfg.intr_alloc_flags = 0;
-        cfg.dma_buf_count    = 4;
-        cfg.dma_buf_len      = 128; // sample数
+        cfg.dma_buf_count = 4;
+        cfg.dma_buf_len = 128; // sample数
         // 64sampleで1.024ms
         cfg.use_apll = false;
 
@@ -121,10 +122,10 @@ FMOutputHandler::FMOutputHandler()
 
     {
         i2s_pin_config_t cfg{};
-        cfg.bck_io_num   = target::config::SD_CLK;
-        cfg.ws_io_num    = target::config::SD_WS;
+        cfg.bck_io_num = target::config::SD_CLK;
+        cfg.ws_io_num = target::config::SD_WS;
         cfg.data_out_num = I2S_PIN_NO_CHANGE;
-        cfg.data_in_num  = target::config::SD_DATA;
+        cfg.data_in_num = target::config::SD_DATA;
 
         auto r = i2s_set_pin(port_, &cfg);
         assert(r == ESP_OK);
@@ -148,8 +149,7 @@ FMOutputHandler::~FMOutputHandler()
     i2s_driver_uninstall(port_);
 }
 
-void
-FMOutputHandler::setSampleRate(uint32_t sampleRate)
+void FMOutputHandler::setSampleRate(uint32_t sampleRate)
 {
     auto r = i2s_set_sample_rates(port_, sampleRate);
     assert(r == ESP_OK);
@@ -171,8 +171,7 @@ FMOutputHandler::receiveTask()
 }
 */
 
-void
-FMOutputHandler::read(uint32_t* buf, size_t size)
+void FMOutputHandler::read(uint32_t *buf, size_t size)
 {
     size_t bytesRead;
     i2s_read(port_, buf, size, &bytesRead, portMAX_DELAY);
@@ -188,8 +187,7 @@ int16_t recentSample[unitCount * 2];
 uint16_t outSampleBuffer[unitCount * 2];
 } // namespace
 
-void
-audioTask(void*)
+void audioTask(void *)
 {
     DBOUT(("start Audio task.\n"));
 
@@ -204,12 +202,12 @@ audioTask(void*)
         //        decodeYM3012Sample(decodeBuffer, sampleBuffer, unitCount);
         decodeYM3012Sample(recentSample, sampleBuffer, unitCount);
 
-        int scale       = int(0.3f * 65535);
-        const auto* src = recentSample;
-        auto* dst       = outSampleBuffer;
+        int scale = int(0.3f * 65535);
+        const auto *src = recentSample;
+        auto *dst = outSampleBuffer;
         for (int i = 0; i < unitCount; ++i)
         {
-            int v  = (((src[0] + src[1]) * scale) >> 17) + 32768;
+            int v = (((src[0] + src[1]) * scale) >> 17) + 32768;
             dst[0] = v;
             dst[1] = v;
             src += 2;
@@ -221,8 +219,7 @@ audioTask(void*)
     }
 }
 
-void
-startAudio()
+void startAudio()
 {
     FMOutputHandler::instance();    // init
     InternalSpeakerOut::instance(); // init
@@ -235,8 +232,7 @@ startAudio()
 
 ////////////////////////////////
 
-void
-setFMClock(uint32_t freq, int sampleRateDiv)
+void setFMClock(uint32_t freq, int sampleRateDiv)
 {
     auto sampleRate = (freq * 2 / sampleRateDiv + 1) >> 1;
     FMOutputHandler::instance().setSampleRate(sampleRate);
@@ -244,8 +240,7 @@ setFMClock(uint32_t freq, int sampleRateDiv)
     target::startFMClock(freq);
 }
 
-void
-initialize()
+void initialize()
 {
     //    FMOutputHandler::instance(); // init
     //    setFMClock(4000000, 64);
@@ -253,7 +248,7 @@ initialize()
     startAudio();
 }
 
-const int16_t*
+const int16_t *
 getRecentSampleForTest()
 {
     //    FMOutputHandler::instance().read((uint32_t*)recentSample, 4 * 128);

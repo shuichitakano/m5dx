@@ -1,0 +1,9 @@
+[submodule "components/arduino"]
+	path = components/arduino
+	url = https://github.com/espressif/arduino-esp32
+[submodule "components/m5stack"]
+	path = components/m5stack
+	url = https://github.com/m5stack/M5Stack.git
+[submodule "components/ext/Adafruit_NeoPixel"]
+	path = components/ext/Adafruit_NeoPixel
+	url = https://github.com/adafruit/Adafruit_NeoPixel.git

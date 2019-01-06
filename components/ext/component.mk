@@ -1,0 +1,3 @@
+COMPONENT_SRCDIRS := Adafruit_NeoPixel
+COMPONENT_ADD_INCLUDEDIRS := Adafruit_NeoPixel
+
