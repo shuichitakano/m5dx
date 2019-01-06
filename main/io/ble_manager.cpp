@@ -17,6 +17,7 @@
 #include <mutex>
 #include <sys/mutex.h>
 #include <vector>
+#include <string.h>
 
 namespace io
 {
@@ -26,8 +27,7 @@ namespace
 
 sys::Mutex mutex_;
 
-bool
-less(const BLEServiceEntry& a, const BLEServiceEntry& b)
+bool less(const BLEServiceEntry &a, const BLEServiceEntry &b)
 {
     if (a.name != b.name)
     {
@@ -36,8 +36,7 @@ less(const BLEServiceEntry& a, const BLEServiceEntry& b)
     return a.addr < b.addr;
 }
 
-bool
-eq(const BLEServiceEntry& a, const BLEServiceEntry& b)
+bool eq(const BLEServiceEntry &a, const BLEServiceEntry &b)
 {
     return a.addr == b.addr && a.name == b.name;
 }
@@ -59,7 +58,7 @@ makeUUID32String(uint32_t v)
 }
 
 std::string
-makeUUID128String(const uint8_t* uuid128)
+makeUUID128String(const uint8_t *uuid128)
 {
     char str[37];
     sprintf(str,
@@ -85,7 +84,7 @@ makeUUID128String(const uint8_t* uuid128)
 }
 
 std::string
-makeUUIDString(const esp_bt_uuid_t& v)
+makeUUIDString(const esp_bt_uuid_t &v)
 {
     switch (v.len)
     {
@@ -101,15 +100,14 @@ makeUUIDString(const esp_bt_uuid_t& v)
     return {};
 }
 
-void
-dumpBondedDevices()
+void dumpBondedDevices()
 {
     int dev_num = esp_ble_get_bond_device_num();
     std::vector<esp_ble_bond_dev_t> list(dev_num);
 
     esp_ble_get_bond_device_list(&dev_num, list.data());
     DBOUT(("%d bonded devices.\n", dev_num));
-    for (auto& v : list)
+    for (auto &v : list)
     {
         DBOUT((" device: %02x:%02x:%02x:%02x:%02x:%02x\n",
                v.bd_addr[0],
@@ -121,14 +119,13 @@ dumpBondedDevices()
     }
 }
 
-bool
-isBondedDevice(esp_bd_addr_t bda)
+bool isBondedDevice(esp_bd_addr_t bda)
 {
     int dev_num = esp_ble_get_bond_device_num();
     std::vector<esp_ble_bond_dev_t> list(dev_num);
 
     esp_ble_get_bond_device_list(&dev_num, list.data());
-    for (auto& v : list)
+    for (auto &v : list)
     {
         if (memcmp(v.bd_addr, bda, 6) == 0)
         {
@@ -140,8 +137,7 @@ isBondedDevice(esp_bd_addr_t bda)
 
 } // namespace
 
-void
-BLEServiceEntry::dump() const
+void BLEServiceEntry::dump() const
 {
     DBOUT(("ADDR: %02x:%02x:%02x:%02x:%02x:%02x, type %d RSSI: %d\n",
            addr[0],
@@ -155,8 +151,7 @@ BLEServiceEntry::dump() const
     DBOUT(("'%s':'%s' flag %d\n", name.c_str(), uuid.c_str(), flag));
 }
 
-void
-updateServiceList(std::vector<BLEServiceEntry>& list, const BLEServiceEntry& s)
+void updateServiceList(std::vector<BLEServiceEntry> &list, const BLEServiceEntry &s)
 {
     list.push_back(s);
     std::sort(list.begin(), list.end(), less);
@@ -174,7 +169,7 @@ struct BLEManager::Impl
 
         std::vector<BLECharacteristic> characteristics_;
 
-        BLECharacteristic* getCurrentChar()
+        BLECharacteristic *getCurrentChar()
         {
             return characteristics_.empty() ? nullptr
                                             : &characteristics_.back();
@@ -183,7 +178,7 @@ struct BLEManager::Impl
 
     struct ClientState
     {
-        int appID_            = -1;
+        int appID_ = -1;
         esp_gatt_if_t gattIF_ = ESP_GATT_IF_NONE;
 
         enum class Stage
@@ -199,15 +194,15 @@ struct BLEManager::Impl
 
         std::vector<Service> services_;
 
-        BLEClientHandler* handler_;
+        BLEClientHandler *handler_;
 
         struct Job
         {
-            virtual void process(ClientState* state) = 0;
+            virtual void process(ClientState *state) = 0;
             virtual esp_gatt_status_t
-            handleEvent(ClientState* state,
+            handleEvent(ClientState *state,
                         esp_gattc_cb_event_t event,
-                        esp_ble_gattc_cb_param_t* param) = 0;
+                        esp_ble_gattc_cb_param_t *param) = 0;
         };
 
         struct JobReadCh : public Job
@@ -219,7 +214,7 @@ struct BLEManager::Impl
             {
             }
 
-            void process(ClientState* state) override
+            void process(ClientState *state) override
             {
                 esp_ble_gattc_read_char(state->gattIF_,
                                         state->connectID_,
@@ -228,12 +223,12 @@ struct BLEManager::Impl
             }
 
             esp_gatt_status_t
-            handleEvent(ClientState* state,
+            handleEvent(ClientState *state,
                         esp_gattc_cb_event_t event,
-                        esp_ble_gattc_cb_param_t* param) override
+                        esp_ble_gattc_cb_param_t *param) override
             {
                 assert(event == ESP_GATTC_WRITE_CHAR_EVT);
-                auto& p = param->read;
+                auto &p = param->read;
                 if (p.status == ESP_GATT_OK)
                 {
                     DBOUT(("read char success: h %d\n", p.handle));
@@ -267,15 +262,13 @@ struct BLEManager::Impl
             bool needResponse_;
 
             JobWriteCh(int handle,
-                       std::vector<uint8_t>&& data,
+                       std::vector<uint8_t> &&data,
                        bool needResponse = true)
-                : handle_{handle}
-                , data_{data}
-                , needResponse_{needResponse}
+                : handle_{handle}, data_{data}, needResponse_{needResponse}
             {
             }
 
-            void process(ClientState* state) override
+            void process(ClientState *state) override
             {
                 esp_ble_gattc_write_char(state->gattIF_,
                                          state->connectID_,
@@ -289,12 +282,12 @@ struct BLEManager::Impl
             }
 
             esp_gatt_status_t
-            handleEvent(ClientState* state,
+            handleEvent(ClientState *state,
                         esp_gattc_cb_event_t event,
-                        esp_ble_gattc_cb_param_t* param) override
+                        esp_ble_gattc_cb_param_t *param) override
             {
                 assert(event == ESP_GATTC_WRITE_CHAR_EVT);
-                auto& p = param->write;
+                auto &p = param->write;
                 if (p.status == ESP_GATT_OK)
                 {
                     DBOUT(("write char success: h %d\n", p.handle));
@@ -318,22 +311,19 @@ struct BLEManager::Impl
         {
             int handle_;
             size_t dataSize_;
-            const void* data_;
+            const void *data_;
             bool needResponse_;
 
             JobWriteChDesc(int handle,
-                           const void* data,
+                           const void *data,
                            size_t size,
                            bool needResponse = true)
-                : handle_{handle}
-                , dataSize_{size}
-                , data_{data}
-                , needResponse_{needResponse}
+                : handle_{handle}, dataSize_{size}, data_{data}, needResponse_{needResponse}
             {
                 DBOUT(("create write ch desc job %d\n", handle));
             }
 
-            void process(ClientState* state) override
+            void process(ClientState *state) override
             {
                 DBOUT(("proc write desc ch %d\n", handle_));
                 esp_ble_gattc_write_char_descr(
@@ -341,20 +331,20 @@ struct BLEManager::Impl
                     state->connectID_,
                     handle_,
                     dataSize_,
-                    reinterpret_cast<uint8_t*>(const_cast<void*>(data_)),
+                    reinterpret_cast<uint8_t *>(const_cast<void *>(data_)),
                     needResponse_ ? ESP_GATT_WRITE_TYPE_RSP
                                   : ESP_GATT_WRITE_TYPE_NO_RSP,
                     ESP_GATT_AUTH_REQ_NONE);
             }
 
             esp_gatt_status_t
-            handleEvent(ClientState* state,
+            handleEvent(ClientState *state,
                         esp_gattc_cb_event_t event,
-                        esp_ble_gattc_cb_param_t* param) override
+                        esp_ble_gattc_cb_param_t *param) override
             {
                 DBOUT(("handle ev: write desc %d\n", handle_));
                 assert(event == ESP_GATTC_WRITE_DESCR_EVT);
-                auto& p = param->write;
+                auto &p = param->write;
                 if (p.status == ESP_GATT_OK)
                 {
                     DBOUT(("write description success: h %d\n", p.handle));
@@ -379,7 +369,7 @@ struct BLEManager::Impl
                 DBOUT(("create reg notify job %d\n", handle));
             }
 
-            void process(ClientState* state) override
+            void process(ClientState *state) override
             {
                 DBOUT(("proc reg notify %d\n", handle_));
                 esp_ble_gattc_register_for_notify(
@@ -387,12 +377,12 @@ struct BLEManager::Impl
             }
 
             esp_gatt_status_t
-            handleEvent(ClientState* state,
+            handleEvent(ClientState *state,
                         esp_gattc_cb_event_t event,
-                        esp_ble_gattc_cb_param_t* param) override
+                        esp_ble_gattc_cb_param_t *param) override
             {
                 assert(event == ESP_GATTC_REG_FOR_NOTIFY_EVT);
-                auto& p = param->reg_for_notify;
+                auto &p = param->reg_for_notify;
                 if (p.status == ESP_GATT_OK)
                 {
                     DBOUT(("reg for notify success: h %d\n", p.handle));
@@ -409,7 +399,7 @@ struct BLEManager::Impl
 
         std::deque<std::unique_ptr<Job>> jobs_;
 
-    public:
+      public:
         bool isOpened() const { return stage_ >= Stage::OPENED; }
         bool isConnected() const { return stage_ >= Stage::CONNECTED; }
 
@@ -428,13 +418,13 @@ struct BLEManager::Impl
 
         void disconnect()
         {
-            stage_     = Stage::IDLE;
+            stage_ = Stage::IDLE;
             connectID_ = -1;
 
             services_.clear();
         }
 
-        void addJob(Job* job)
+        void addJob(Job *job)
         {
             std::lock_guard<sys::Mutex> lock(mutex_);
             bool kick = jobs_.empty();
@@ -447,7 +437,7 @@ struct BLEManager::Impl
             }
         }
 
-        Job* getCurrentJob()
+        Job *getCurrentJob()
         {
             return jobs_.empty() ? nullptr : jobs_.front().get();
         }
@@ -485,24 +475,24 @@ struct BLEManager::Impl
     std::deque<ClientState> clients_;
 
     esp_ble_scan_params_t scanParams_ = {
-        .scan_type          = BLE_SCAN_TYPE_ACTIVE,
-        .own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
+        .scan_type = BLE_SCAN_TYPE_ACTIVE,
+        .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
         .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
-        .scan_interval      = 0x50,
-        .scan_window        = 0x30,
-        .scan_duplicate     = BLE_SCAN_DUPLICATE_DISABLE};
+        .scan_interval = 0x50,
+        .scan_window = 0x30,
+        .scan_duplicate = BLE_SCAN_DUPLICATE_DISABLE};
 
     int scanDurationInSec_ = 30;
-    bool scanning_         = false;
+    bool scanning_ = false;
 
     int currentAppID_ = 0;
 
-public:
-    static Impl& getImpl() { return *BLEManager::instance().pimpl_; }
+  public:
+    static Impl &getImpl() { return *BLEManager::instance().pimpl_; }
 
-    ClientState* findClientByAppID(int id)
+    ClientState *findClientByAppID(int id)
     {
-        for (auto& p : clients_)
+        for (auto &p : clients_)
         {
             if (p.appID_ == id)
             {
@@ -512,9 +502,9 @@ public:
         return nullptr;
     }
 
-    ClientState* findClientByGATTIF(int gattIF)
+    ClientState *findClientByGATTIF(int gattIF)
     {
-        for (auto& p : clients_)
+        for (auto &p : clients_)
         {
             if (p.gattIF_ == gattIF)
             {
@@ -524,9 +514,9 @@ public:
         return nullptr;
     }
 
-    ClientState* findClientByAddress(esp_bd_addr_t bda)
+    ClientState *findClientByAddress(esp_bd_addr_t bda)
     {
-        for (auto& p : clients_)
+        for (auto &p : clients_)
         {
             if (p.checkAddress(bda))
             {
@@ -536,9 +526,9 @@ public:
         return nullptr;
     }
 
-    ClientState* findClientByHandler(BLEClientHandler* h)
+    ClientState *findClientByHandler(BLEClientHandler *h)
     {
-        for (auto& p : clients_)
+        for (auto &p : clients_)
         {
             if (p.handler_ == h)
             {
@@ -548,7 +538,7 @@ public:
         return nullptr;
     }
 
-    void onGAPEvent(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t* param)
+    void onGAPEvent(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
     {
         DBOUT(("onGAPEvent: event %d, param %p\n", event, param));
 
@@ -556,7 +546,7 @@ public:
         {
         case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT:
         {
-            auto& p = param->local_privacy_cmpl;
+            auto &p = param->local_privacy_cmpl;
             if (p.status != ESP_BT_STATUS_SUCCESS)
             {
                 DBOUT(("config local privacy failed, error code =%x\n",
@@ -596,7 +586,7 @@ public:
 
         case ESP_GAP_BLE_PASSKEY_NOTIF_EVT:
         {
-            auto& p = param->ble_security.key_notif;
+            auto &p = param->ble_security.key_notif;
             DBOUT(("Passkey notify number:%d\n", p.passkey));
         }
         break;
@@ -631,7 +621,7 @@ public:
 
         case ESP_GAP_BLE_AUTH_CMPL_EVT:
         {
-            auto& p = param->ble_security.auth_cmpl;
+            auto &p = param->ble_security.auth_cmpl;
             DBOUT(("ESP_GAP_BLE_AUTH_CMPL_EVT %02x:%02x:%02x:%02x:%02x:%02x\n",
                    p.bd_addr[0],
                    p.bd_addr[1],
@@ -702,27 +692,27 @@ public:
 
         case ESP_GAP_BLE_SCAN_RESULT_EVT:
         {
-            auto& res = param->scan_rst;
+            auto &res = param->scan_rst;
             switch (res.search_evt)
             {
             case ESP_GAP_SEARCH_INQ_RES_EVT:
             {
                 BLEServiceEntry e;
-                e.addr[0]  = res.bda[0];
-                e.addr[1]  = res.bda[1];
-                e.addr[2]  = res.bda[2];
-                e.addr[3]  = res.bda[3];
-                e.addr[4]  = res.bda[4];
-                e.addr[5]  = res.bda[5];
-                e.rssi     = res.rssi;
-                e.flag     = res.flag;
+                e.addr[0] = res.bda[0];
+                e.addr[1] = res.bda[1];
+                e.addr[2] = res.bda[2];
+                e.addr[3] = res.bda[3];
+                e.addr[4] = res.bda[4];
+                e.addr[5] = res.bda[5];
+                e.rssi = res.rssi;
+                e.flag = res.flag;
                 e.addrType = res.ble_addr_type;
 
                 uint8_t len;
                 auto adv_name = esp_ble_resolve_adv_data(
                     res.ble_adv, ESP_BLE_AD_TYPE_NAME_CMPL, &len);
-                std::string name((const char*)adv_name,
-                                 (const char*)adv_name + len);
+                std::string name((const char *)adv_name,
+                                 (const char *)adv_name + len);
                 e.name = name;
 
                 auto uuid128 = esp_ble_resolve_adv_data(
@@ -734,15 +724,15 @@ public:
 
                 if (0)
                 {
-                    auto p   = res.ble_adv;
+                    auto p = res.ble_adv;
                     auto end = p + 62;
                     while (p[0] && p < end)
                     {
-                        auto l    = p[0];
+                        auto l = p[0];
                         auto type = p[1];
                         DBOUT(("type %02x: ", type));
                         auto ct = l - 1;
-                        auto d  = p + 2;
+                        auto d = p + 2;
                         while (ct)
                         {
                             DBOUT(("%02x ", *d));
@@ -756,7 +746,7 @@ public:
 
                 e.dump();
 
-                for (auto& p : clients_)
+                for (auto &p : clients_)
                 {
                     if (!p.isOpened() && p.handler_->onScanEntry(e))
                     {
@@ -831,7 +821,7 @@ public:
 
     void onGATTClientEvent(esp_gattc_cb_event_t event,
                            esp_gatt_if_t gattc_if,
-                           esp_ble_gattc_cb_param_t* param)
+                           esp_ble_gattc_cb_param_t *param)
     {
         DBOUT(("onGATTClientEvent: event %d, if %d, param %p\n",
                event,
@@ -873,7 +863,7 @@ public:
         {
         case ESP_GATTC_CONNECT_EVT:
         {
-            auto& p = param->connect;
+            auto &p = param->connect;
             DBOUT(("connect: %02x:%02x:%02x:%02x:%02x:%02x: connID %d\n",
                    p.remote_bda[0],
                    p.remote_bda[1],
@@ -894,7 +884,7 @@ public:
 
         case ESP_GATTC_OPEN_EVT:
         {
-            auto& p = param->open;
+            auto &p = param->open;
             if (p.status != ESP_GATT_OK)
             {
                 DBOUT(("open failed, status %d\n", p.status));
@@ -912,7 +902,7 @@ public:
 
         case ESP_GATTC_CFG_MTU_EVT:
         {
-            auto& p = param->cfg_mtu;
+            auto &p = param->cfg_mtu;
             if (p.status != ESP_GATT_OK)
             {
                 DBOUT(("config mtu failed, error status = %x\n", p.status));
@@ -929,11 +919,11 @@ public:
 
         case ESP_GATTC_SEARCH_RES_EVT:
         {
-            auto& p = param->search_res;
+            auto &p = param->search_res;
 
             Service s;
-            s.handle_  = {p.start_handle, p.end_handle};
-            s.uuid_    = p.srvc_id.uuid;
+            s.handle_ = {p.start_handle, p.end_handle};
+            s.uuid_ = p.srvc_id.uuid;
             s.uuidStr_ = makeUUIDString(p.srvc_id.uuid);
 
             DBOUT(("ESP_GATTC_SEARCH_RES_EVT: start %d, end %d, inst %d, uuid "
@@ -950,7 +940,7 @@ public:
 
         case ESP_GATTC_SEARCH_CMPL_EVT:
         {
-            auto& p = param->search_cmpl;
+            auto &p = param->search_cmpl;
             if (p.status != ESP_GATT_OK)
             {
                 DBOUT(("search service failed, error status = %x\n", p.status));
@@ -972,7 +962,7 @@ public:
             }
             DBOUT(("ESP_GATTC_SEARCH_CMPL_EVT\n"));
 
-            for (auto& s : client->services_)
+            for (auto &s : client->services_)
             {
                 uint16_t count = 0;
                 if (auto status = esp_ble_gattc_get_attr_count(gattc_if,
@@ -1005,7 +995,7 @@ public:
                     assert(count <= db.size());
                     db.resize(count);
 
-                    for (auto& e : db)
+                    for (auto &e : db)
                     {
                         switch (e.type)
                         {
@@ -1035,7 +1025,7 @@ public:
                         {
                             BLECharacteristic ch;
                             ch.handle = e.attribute_handle;
-                            ch.uuid   = makeUUIDString(e.uuid);
+                            ch.uuid = makeUUIDString(e.uuid);
                             ch.broadcast =
                                 e.properties & ESP_GATT_CHAR_PROP_BIT_BROADCAST;
                             ch.read =
@@ -1098,7 +1088,7 @@ public:
 
                         case ESP_GATT_DB_DESCRIPTOR:
                         {
-                            auto ch   = s.getCurrentChar();
+                            auto ch = s.getCurrentChar();
                             auto uuid = makeUUIDString(e.uuid);
                             DBOUT(("Descriptor: %s h %d, chh %d\n",
                                    uuid.c_str(),
@@ -1115,7 +1105,7 @@ public:
                                     ch->handleCCCD = e.attribute_handle;
                                     DBOUT(("CCCD. h%d\n", e.attribute_handle));
 
-                                    static uint8_t dataNotify[]   = {1, 0};
+                                    static uint8_t dataNotify[] = {1, 0};
                                     static uint8_t dataIndicate[] = {2, 0};
                                     client->addJob(
                                         new ClientState::JobWriteChDesc(
@@ -1156,7 +1146,7 @@ public:
 
         case ESP_GATTC_NOTIFY_EVT:
         {
-            auto& p = param->notify;
+            auto &p = param->notify;
             if (p.is_notify)
             {
                 DBOUT(("notify: %d bytes\n", p.value_len));
@@ -1206,12 +1196,12 @@ public:
         }
     }
 
-    void registerClientHandler(BLEClientHandler& p)
+    void registerClientHandler(BLEClientHandler &p)
     {
         DBOUT(("Register BLEClient %p:%d\n", &p, currentAppID_));
 
         ClientState e;
-        e.appID_   = currentAppID_++;
+        e.appID_ = currentAppID_++;
         e.handler_ = &p;
         clients_.push_back(std::move(e));
 
@@ -1229,7 +1219,7 @@ public:
         DBOUT(("initialize BLEManager.\n"));
         if (auto ret = esp_ble_gap_register_callback(
                 [](esp_gap_ble_cb_event_t event,
-                   esp_ble_gap_cb_param_t* param) {
+                   esp_ble_gap_cb_param_t *param) {
                     getImpl().onGAPEvent(event, param);
                 }))
         {
@@ -1240,7 +1230,7 @@ public:
         if (auto ret = esp_ble_gattc_register_callback(
                 [](esp_gattc_cb_event_t event,
                    esp_gatt_if_t gattc_if,
-                   esp_ble_gattc_cb_param_t* param) {
+                   esp_ble_gattc_cb_param_t *param) {
                     getImpl().onGATTClientEvent(event, gattc_if, param);
                 }))
         {
@@ -1263,7 +1253,7 @@ public:
         // uint8_t iocap    = ESP_IO_CAP_OUT;
         uint8_t key_size = 16;
         uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-        uint8_t rsp_key  = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+        uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
 
         esp_ble_gap_set_security_param(
             ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
@@ -1297,7 +1287,7 @@ public:
         DBOUT(("start BLE scanning done.\n"));
     }
 
-    bool read(BLEClientHandler* h, int charHandle)
+    bool read(BLEClientHandler *h, int charHandle)
     {
         auto client = findClientByHandler(h);
         if (!client)
@@ -1310,9 +1300,9 @@ public:
         return true;
     }
 
-    bool write(BLEClientHandler* h,
+    bool write(BLEClientHandler *h,
                int charHandle,
-               std::vector<uint8_t>&& data,
+               std::vector<uint8_t> &&data,
                bool needResponse)
     {
         auto client = findClientByHandler(h);
@@ -1335,60 +1325,53 @@ BLEManager::BLEManager()
 
 BLEManager::~BLEManager() = default;
 
-bool
-BLEManager::initialize()
+bool BLEManager::initialize()
 {
     return pimpl_->initialize();
 }
 
-void
-BLEManager::setDeviceName(const char* name)
+void BLEManager::setDeviceName(const char *name)
 {
     esp_bt_dev_set_device_name(name);
 }
 
-void
-BLEManager::registerClientProfile(BLEClientHandler& p)
+void BLEManager::registerClientProfile(BLEClientHandler &p)
 {
     pimpl_->registerClientHandler(p);
 }
 
-void
-BLEManager::startScan()
+void BLEManager::startScan()
 {
     pimpl_->startScan();
 }
 
-bool
-BLEManager::read(BLEClientHandler* h, int charHandle)
+bool BLEManager::read(BLEClientHandler *h, int charHandle)
 {
     return pimpl_->read(h, charHandle);
 }
 
-bool
-BLEManager::write(BLEClientHandler* h,
-                  int charHandle,
-                  std::vector<uint8_t>&& data,
-                  bool needResponse)
+bool BLEManager::write(BLEClientHandler *h,
+                       int charHandle,
+                       std::vector<uint8_t> &&data,
+                       bool needResponse)
 {
     return pimpl_->write(h, charHandle, std::move(data), needResponse);
 }
 
-void
-BLEManager::removeAllBondedDevices()
+void BLEManager::removeAllBondedDevices()
 {
     int dev_num = esp_ble_get_bond_device_num();
     std::vector<esp_ble_bond_dev_t> list(dev_num);
 
     esp_ble_get_bond_device_list(&dev_num, list.data());
-    for (auto& v : list)
+    for (auto &v : list)
     {
         esp_ble_remove_bond_device(v.bd_addr);
     }
     DBOUT(("remove %d bonded devices.\n", dev_num));
 }
 
-BLEManager&
+BLEManager &
 BLEManager::instance()
 {
     static BLEManager inst;
