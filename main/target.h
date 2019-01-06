@@ -1,0 +1,50 @@
+/*
+ * author : Shuichi TAKANO
+ * since  : Sun Oct 21 2018 19:32:54
+ */
+#ifndef E674E0B2_E133_F008_126E_2B375441C8C2
+#define E674E0B2_E133_F008_126E_2B375441C8C2
+
+#include <stdint.h>
+
+namespace target
+{
+
+namespace config
+{
+
+constexpr int D0 = 1;
+constexpr int D1 = 2;
+constexpr int D2 = 18;
+constexpr int D3 = 19;
+constexpr int D4 = 5;
+constexpr int D5 = 21;
+constexpr int D6 = 22;
+constexpr int D7 = 23;
+
+constexpr int CS  = 13;
+constexpr int A0  = 12;
+constexpr int CLK = 0;
+
+constexpr int SD_CLK  = 26;
+constexpr int SD_DATA = 35;
+constexpr int SD_WS   = 36;
+
+} // namespace config
+
+void initGPIO();
+void setupBus();
+void restoreBus();
+
+void startFMClock(uint32_t freq);
+
+void writeBusData(int d);
+
+void negateFMCS();
+void assertFMCS();
+
+void setFMA0(int i);
+
+} // namespace target
+
+#endif /* E674E0B2_E133_F008_126E_2B375441C8C2 */
