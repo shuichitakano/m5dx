@@ -4,103 +4,115 @@
  */
 
 #include "file_util.h"
-#include <debug.h>
-#include <stdio.h>
+#include "../debug.h"
+#include <SD.h>
 
 namespace io
 {
 
-int getFileSize(const char *filename)
+int
+getFileSize(const char* filename)
 {
-    auto fp = fopen(filename, "rb");
-    if (!fp)
+    auto f = SD.open(filename);
+    if (!f || !f.available())
     {
-        DBOUT(("file open error %s\n", filename));
+        DBOUT(("getFileSize error %s\n", filename));
         return -1;
     }
-
-    fseek(fp, 0, SEEK_END);
-    auto pos = ftell(fp);
-    fclose(fp);
-
-    return (int)pos;
+    return f.size();
 }
 
-int readFile(void *buffer, const char *filename, size_t size, size_t pos)
+int
+readFile(void* buffer, const char* filename, size_t size, size_t pos)
 {
-    DBOUT(("readFile: %s, %x-%d bytes.\n", filename, (int)pos, (int)size));
-    auto fp = fopen(filename, "rb");
-    if (!fp)
+    DBOUT(("readFile(%p,%s,%d,%x)\n", buffer, filename, (int)size, (int)pos));
+
+    auto f = SD.open(filename);
+    if (!f)
     {
-        DBOUT(("file open error %s\n", filename));
+        DBOUT(("file '%s' open error.\n", filename));
         return -1;
     }
 
     if (pos)
-        fseek(fp, pos, SEEK_SET);
-    auto r = fread(buffer, 1, size, fp);
-    fclose(fp);
+    {
+        if (!f.seek(pos))
+        {
+            DBOUT(("seek error\n"));
+            return -1;
+        }
+    }
 
-    return (int)r;
+    return f.read((uint8_t*)buffer, size);
 }
 
-bool readFile(std::vector<uint8_t> &buffer, const char *filename)
+bool
+readFile(std::vector<uint8_t>& buffer, const char* filename)
 {
-    DBOUT(("readFile: %s.\n", filename));
-    auto fp = fopen(filename, "rb");
-    if (!fp)
+    auto f = SD.open(filename);
+    if (!f)
     {
-        DBOUT(("file open error '%s'\n", filename));
+        DBOUT(("file '%s' open error.\n", filename));
+        return false;
+    }
+    buffer.resize(f.size());
+    DBOUT(("readFile(%s, %zdbytes)\n", filename, buffer.size()));
+    return f.read(buffer.data(), buffer.size());
+}
+
+bool
+writeFile(const void* buffer, const char* filename, size_t size)
+{
+    DBOUT(("writeFile(%p,%s,%d)\n", buffer, filename, size));
+
+    auto f = SD.open(filename, "w");
+    if (!f)
+    {
+        DBOUT(("file '%s' open error.\n", filename));
         return false;
     }
 
-    fseek(fp, 0, SEEK_END);
-    auto size = (size_t)ftell(fp);
-
-    fseek(fp, 0, SEEK_SET);
-
-    buffer.resize(size);
-    auto r = fread(buffer.data(), 1, size, fp);
-    fclose(fp);
-
-    return r == size;
+    if (!f.write((const uint8_t*)buffer, size))
+    {
+        DBOUT(("file '%s' write error.\n", filename));
+        return false;
+    }
+    return true;
 }
 
-bool writeFile(const void *buffer, const char *filename, size_t size)
+bool
+updateFile(const void* buffer, const char* filename, size_t size, size_t pos)
 {
-    DBOUT(("writeFile: %s.\n", filename));
-    auto fp = fopen(filename, "wb");
-    if (!fp)
+    DBOUT(("updateFile(%p,%s,%d,%x)\n", buffer, filename, (int)size, (int)pos));
+
+    auto f = SD.open(filename, "rw"); //?
+    if (!f)
     {
-        DBOUT(("file open error %s\n", filename));
+        DBOUT(("file '%s' open error.\n", filename));
         return false;
     }
 
-    fwrite(buffer, 1, size, fp);
-    fclose(fp);
-    return true;
-}
-
-bool updateFile(const void *buffer, const char *filename, size_t size, size_t pos)
-{
-    DBOUT(("updateFile: %s, %x-%d bytes.\n", filename, (int)pos, (int)size));
-    auto fp = fopen(filename, "rb+");
-    if (!fp)
+    if (pos)
     {
-        DBOUT(("file open error %s\n", filename));
-        return false;
+        if (!f.seek(pos))
+        {
+            DBOUT(("seek error\n"));
+            return false;
+        }
     }
 
-    fseek(fp, pos, SEEK_SET);
-    fwrite(buffer, 1, size, fp);
-    fclose(fp);
+    if (!f.write((const uint8_t*)buffer, size))
+    {
+        DBOUT(("file '%s' write error.\n", filename));
+        return false;
+    }
     return true;
 }
 
-bool writeFile(const std::vector<uint8_t> &buffer, const char *filename)
+bool
+writeFile(const std::vector<uint8_t>& buffer, const char* filename)
 {
-    writeFile(buffer.data(), filename, buffer.size());
-    return true;
+    return writeFile(buffer.data(), filename, buffer.size());
 }
 
 } // namespace io

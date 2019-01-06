@@ -5,17 +5,20 @@
 
 #include <sys/util.h>
 #include <stdio.h>
-#include <io/sd.h>
+//#include <io/sd.h>
 
-#include <dirent.h>
+//#include <dirent.h>
 #include <io/file_util.h>
 #include <vector>
+
+#include <SD.h>
 
 extern "C" void
 app_main()
 {
-    io::initializeSD("/sdcard");
 
+#if 0
+    io::initializeSD("/sdcard");
     {
         DIR *dp;
         struct dirent *ep;
@@ -29,6 +32,7 @@ app_main()
             (void)closedir(dp);
         }
     }
+#endif
 
 #if 0
     FILE *fp = fopen("/sdcard/test.txt", "r");
@@ -45,12 +49,21 @@ app_main()
     }
 #endif
 
+    int TFCARD_CS_PIN = 4;
+    if (!SD.begin(TFCARD_CS_PIN, SPI, 40000000))
     {
-        auto size = io::getFileSize("/sdcard/test.txt");
+        printf("initialize SD failed.\n");
+    }
+
+    {
+        //        const char *filename = "/sdcard/test.txt";
+        const char *filename = "/test.txt";
+
+        auto size = io::getFileSize(filename);
         printf("size = %d\n", size);
 
         std::vector<uint8_t> buf;
-        io::readFile(buf, "/sdcard/test.txt");
+        io::readFile(buf, filename);
         buf.push_back(0);
         printf("file = %s\n", buf.data());
     }

@@ -28,7 +28,7 @@ bool initializeSD(const char *mountPoint)
 
     esp_vfs_fat_sdmmc_mount_config_t mountConfig;
     mountConfig.format_if_mount_failed = false;
-    mountConfig.max_files = 5;
+    mountConfig.max_files = 1;
     mountConfig.allocation_unit_size = 16 * 1024;
 
     sdmmc_card_t *card;
