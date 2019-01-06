@@ -5,7 +5,6 @@
 #ifndef _4F7C9512_7133_F00A_60F0_F1CD3C763BFD
 #define _4F7C9512_7133_F00A_60F0_F1CD3C763BFD
 
-//#include <HardwareSerial.h>
 #include <stdio.h>
 
 #ifdef NDEBUG
@@ -14,7 +13,6 @@
     {            \
     } while (0)
 #else
-//#define DBOUT(x) Serial.printf x
 #define DBOUT(x) printf x
 #endif
 
