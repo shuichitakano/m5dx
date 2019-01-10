@@ -10,6 +10,7 @@
 
 namespace sys
 {
+
 class Mutex
 {
     SemaphoreHandle_t handle_;

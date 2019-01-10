@@ -213,9 +213,10 @@ void audioTask(void *)
             src += 2;
             dst += 2;
         }
-
-        //        InternalSpeakerOut::instance().write(outSampleBuffer,
-        //        unitCount);
+#if 0
+        InternalSpeakerOut::instance().write(outSampleBuffer,
+                                             unitCount);
+#endif
     }
 }
 

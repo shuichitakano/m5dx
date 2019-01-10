@@ -19,6 +19,7 @@
 #include <music_player/mdxplayer.h>
 
 #undef min
+#include <sys/job_manager.h>
 
 #define M5STACK_FIRE_NEO_NUM_LEDS 10
 #define M5STACK_FIRE_NEO_DATA_PIN 15
@@ -40,6 +41,8 @@ makeColor(int r, int g, int b)
 
 static music_player::MDXPlayer mdxPlayer;
 
+static sys::JobManager jobManager_;
+
 // void
 // spriteTest()
 // {
@@ -60,7 +63,8 @@ static music_player::MDXPlayer mdxPlayer;
 //     img.deleteSprite();
 // }
 
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
+void
+listDir(fs::FS& fs, const char* dirname, uint8_t levels)
 {
     Serial.printf("Listing directory: %s\n", dirname);
 
@@ -105,17 +109,22 @@ graphics::FrameBuffer waveViewBuffer_;
 }
 
 // The setup routine runs once when M5Stack starts up
-void setup()
+void
+setup()
 {
+
     Serial.begin(115200);
     Serial.flush();
     Serial.print("M5Stack initializing...\n");
+
+    jobManager_.start();
 
     graphics::getDisplay().initialize();
     //    graphics::getDisplay().setWindow(120, 30, 20, 20);
     //    graphics::getDisplay().fill(100, 50, 250, 150, 0xffff);
 
-    waveViewBuffer_.initialize(128, 64, 16);
+    //    waveViewBuffer_.initialize(128, 64, 16);
+    waveViewBuffer_.initialize(128, 128, 16);
 
     if (!SD.begin(TFCARD_CS_PIN, SPI, 40000000))
     {
@@ -132,6 +141,12 @@ void setup()
 
     dacWrite(25, 0);
     audio::initialize();
+
+    jobManager_.add([] {
+        printf("job1\n");
+        delay(1000);
+    });
+    jobManager_.add([] { printf("job2\n"); });
 
     if (!io::initializeBluetooth() || !io::BLEManager::instance().initialize())
     {
@@ -157,7 +172,7 @@ void setup()
     static graphics::FontData fontAscii(fontAsciiBin.data());
     static graphics::FontData fontKanji(fontKanjiBin.data());
 
-    auto &fm = graphics::getDefaultFontManager();
+    auto& fm = graphics::getDefaultFontManager();
     fm.setAsciiFontData(&fontAscii);
     fm.setKanjiFontData(&fontKanji);
     fm.setFrameBuffer(graphics::getDisplay());
@@ -245,12 +260,13 @@ void setup()
 }
 
 // The loop routine runs over and over again forever
-void loop()
+void
+loop()
 {
     static int counter = 0;
     ++counter;
 
-#if 0
+#if 1
     if (counter == 50)
     {
         mdxPlayer.start();
@@ -272,7 +288,7 @@ void loop()
         }
     }
 
-    auto &fm = graphics::getDefaultFontManager();
+    auto& fm = graphics::getDefaultFontManager();
     fm.setColor(graphics::getDisplay().makeColor(0x40, 0xff, 0xa0));
     fm.setBGColor(graphics::getDisplay().makeColor(0x20, 0x20, 0x20));
     fm.setPosition(0, 0);
@@ -282,7 +298,7 @@ void loop()
     fm.setTransparentMode(false);
     fm.putString(str);
 
-    auto *wave = audio::getRecentSampleForTest();
+    auto* wave = audio::getRecentSampleForTest();
 
     fm.setColor(0xffffffff);
     sprintf(str, "%04x:%04x", (uint16_t)wave[0], (uint16_t)wave[1]);
@@ -290,14 +306,14 @@ void loop()
 
 #if 1
     waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
-    auto red = waveViewBuffer_.makeColor(255, 0, 0);
+    auto red   = waveViewBuffer_.makeColor(255, 0, 0);
     auto green = waveViewBuffer_.makeColor(0, 255, 0);
     //    sprintf(str, ": r %d g %d", red, green);
     // fm.putString(str);
     for (int i = 0; i < 128; ++i)
     {
-        int y0 = std::min(127, std::max(0, 32 + (int)(wave[0] >> 10)));
-        int y1 = std::min(127, std::max(0, 32 + (int)(wave[1] >> 10)));
+        int y0 = std::min(127, std::max(0, 64 + (int)(wave[0] >> 9)));
+        int y1 = std::min(127, std::max(0, 64 + (int)(wave[1] >> 9)));
         waveViewBuffer_.setPixel(i, y0, red);
         waveViewBuffer_.setPixel(i, y1, green);
         wave += 2;
