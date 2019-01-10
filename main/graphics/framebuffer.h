@@ -13,13 +13,13 @@ namespace graphics
 
 class FrameBuffer final : public FrameBufferBase
 {
-public:
+  public:
     FrameBuffer();
     FrameBuffer(uint32_t w, uint32_t h, int bpp);
     ~FrameBuffer() noexcept override { release(); }
 
     void initialize(uint32_t w, uint32_t h, int bpp);
-    void release() { img_.deleteSprite(); }
+    void release();
 
     void setWindow(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
     uint32_t getLeft() const override;
@@ -37,12 +37,12 @@ public:
     void setPixel(uint32_t x, uint32_t y, uint32_t c) override;
     uint32_t getPixel(uint32_t x, uint32_t y) const override;
 
-    void blit(const FrameBufferBase& fb, int x, int y) override;
+    void blit(const FrameBufferBase &fb, int x, int y) override;
 
-protected:
-    bool _blitToLCD(InternalLCD*, int x, int y) const override;
+  protected:
+    bool _blitToLCD(InternalLCD *, int x, int y) const override;
 
-private:
+  private:
     using Img = TFT_eSprite;
     Img img_;
 
@@ -50,6 +50,10 @@ private:
     uint32_t wy_ = 0;
     uint32_t ww_ = 0;
     uint32_t wh_ = 0;
+
+    int bpp_ = 0;
+    void *buffer_ = nullptr;
+    uint32_t unitTransferPixels_ = 1280; // 40Mで2500pixelが1ms
 };
 
 } // namespace graphics
