@@ -5,6 +5,7 @@
 
 #include "job_manager.h"
 #include <assert.h>
+#include <debug.h>
 #include <mutex>
 
 namespace sys

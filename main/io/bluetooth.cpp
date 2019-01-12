@@ -7,8 +7,11 @@
 
 #include "../debug.h"
 #include <esp_bt.h>
+#include <esp_bt_device.h>
 #include <esp_bt_main.h>
+#include <esp_gap_bt_api.h>
 #include <sys/nvs.h>
+#include <vector>
 
 namespace io
 {
@@ -63,8 +66,57 @@ initializeBluetooth()
         return false;
     }
 
+    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
+    esp_bt_pin_code_t pin_code;
+    esp_bt_gap_set_pin(pin_type, 0, pin_code);
+
     initialized = true;
     return true;
+}
+
+void
+setBluetoothDeviceName(const char* name)
+{
+    esp_bt_dev_set_device_name(name);
+}
+
+void
+dumpBondedClassicBTDevices()
+{
+    int n = esp_bt_gap_get_bond_device_num();
+
+    std::vector<esp_bd_addr_t> list(n);
+    if (auto r = esp_bt_gap_get_bond_device_list(&n, list.data()))
+    {
+        printf("esp_bt_gap_get_bond_device_list failed %d\n", r);
+        return;
+    }
+
+    DBOUT(("%d bonded classic BT devices.\n", n));
+    for (auto& a : list)
+    {
+        DBOUT((" %02x:%02x:%02x:%02x:%02x:%02x\n",
+               a[0],
+               a[1],
+               a[2],
+               a[3],
+               a[4],
+               a[5]));
+    }
+}
+
+void
+removeAllBondedClassicBTDevices()
+{
+    int n = esp_bt_gap_get_bond_device_num();
+
+    std::vector<esp_bd_addr_t> list(n);
+    esp_bt_gap_get_bond_device_list(&n, list.data());
+
+    for (auto& a : list)
+    {
+        esp_bt_gap_remove_bond_device(a);
+    }
 }
 
 } // namespace io

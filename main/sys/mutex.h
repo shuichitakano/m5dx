@@ -21,6 +21,10 @@ public:
 
     void lock() { xSemaphoreTakeRecursive(handle_, portMAX_DELAY); }
     void unlock() { xSemaphoreGiveRecursive(handle_); }
+
+private:
+    Mutex(const Mutex&) = delete;
+    Mutex& operator=(const Mutex&) = delete;
 };
 
 } // namespace sys
