@@ -19,6 +19,7 @@
 #include <music_player/mdxplayer.h>
 
 #undef min
+#include <io/bt_a2dp_source_manager.h>
 #include <sys/job_manager.h>
 
 #define M5STACK_FIRE_NEO_NUM_LEDS 10
@@ -142,17 +143,19 @@ setup()
     dacWrite(25, 0);
     audio::initialize();
 
+#if 0
     jobManager_.add([] {
         printf("job1\n");
         delay(1000);
     });
     jobManager_.add([] { printf("job2\n"); });
+#endif
 
     if (!io::initializeBluetooth() || !io::BLEManager::instance().initialize())
     {
         DBOUT(("bluetooth initialize error."));
     }
-    io::BLEManager::instance().setDeviceName("M5DX");
+    io::setBluetoothDeviceName("M5DX");
 
     static io::MidiMessageQueue midiIn;
     io::BLEMidiClient::instance().setMIDIIn(&midiIn);
@@ -160,7 +163,13 @@ setup()
         io::BLEMidiClient::instance());
 
     //    io::BLEManager::instance().removeAllBondedDevices();
-    io::BLEManager::instance().startScan();
+    // io::BLEManager::instance().startScan();
+
+    //    io::removeAllBondedClassicBTDevices();
+    io::dumpBondedClassicBTDevices();
+    io::BTA2DPSourceManager a2dpManager_;
+    a2dpManager_.initialize(&jobManager_);
+    a2dpManager_.start();
 
     listDir(SD, "/", 0);
 
@@ -266,7 +275,7 @@ loop()
     static int counter = 0;
     ++counter;
 
-#if 1
+#if 0
     if (counter == 50)
     {
         mdxPlayer.start();

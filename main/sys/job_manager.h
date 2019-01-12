@@ -30,7 +30,7 @@ public:
     ~JobManager();
 
     void start(int prio         = 0,
-               size_t stackSize = 1024,
+               size_t stackSize = 2048,
                const char* name = "JobManager");
     void stop();
 

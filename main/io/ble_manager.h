@@ -74,7 +74,6 @@ public:
     bool initialize();
     void registerClientProfile(BLEClientHandler& p);
 
-    void setDeviceName(const char* name);
     void startScan();
 
     bool read(BLEClientHandler* h, int charHandle);
