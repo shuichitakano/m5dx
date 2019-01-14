@@ -19,7 +19,6 @@ class FMChip : public SoundChipBase
 public:
     void setValue(int addr, int v) override
     {
-//        DBOUT(("%d:%d\n", addr, v));
 #if 1
         target::setupBus();
 
@@ -68,6 +67,16 @@ allocateYM2151()
 void
 freeYM2151(SoundChipBase* p)
 {
+}
+
+void
+resetSoundChip()
+{
+    for (int i = 0; i < 8; ++i)
+    {
+        ym2151_.setValue(0, 8);
+        ym2151_.setValue(1, i);
+    }
 }
 
 } // namespace audio

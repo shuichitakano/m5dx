@@ -5,6 +5,7 @@
 #ifndef _6334CD6A_A133_F008_136B_B244FD882788
 #define _6334CD6A_A133_F008_136B_B244FD882788
 
+#include <array>
 #include <stdint.h>
 
 namespace audio
@@ -12,8 +13,9 @@ namespace audio
 
 void initialize();
 void setFMClock(uint32_t freq, int sampleRateDiv);
+void attachInternalSpeaker();
 
-const int16_t* getRecentSampleForTest();
+// const int16_t* getRecentSampleForTest();
 
 } // namespace audio
 

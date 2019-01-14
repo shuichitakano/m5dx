@@ -2,6 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <SD.h>
 #include <audio/audio.h>
+#include <audio/audio_out.h>
 #include <graphics/display.h>
 #include <graphics/font_data.h>
 #include <graphics/font_manager.h>
@@ -137,10 +138,10 @@ setup()
     //    delay(500);
 
     target::initGPIO();
-    //    delay(10);
     target::restoreBus();
 
     dacWrite(25, 0);
+    audio::AudioOutDriverManager::instance().start();
     audio::initialize();
 
 #if 0
@@ -249,7 +250,8 @@ setup()
 #endif
 
     //
-    auto mdxFilename = "/STC00.MDX";
+    //    auto mdxFilename = "/STC00.MDX";
+    auto mdxFilename = "/mdx/Arsys/Knight Arms/KNA08.MDX";
 
     if (mdxPlayer.loadMDX(mdxFilename))
     {
@@ -275,8 +277,8 @@ loop()
     static int counter = 0;
     ++counter;
 
-#if 0
-    if (counter == 50)
+#if 1
+    if (counter == 100)
     {
         mdxPlayer.start();
         mdxPlayer.play(-1);
@@ -307,13 +309,13 @@ loop()
     fm.setTransparentMode(false);
     fm.putString(str);
 
-    auto* wave = audio::getRecentSampleForTest();
+    //    auto* wave = audio::getRecentSampleForTest();
 
-    fm.setColor(0xffffffff);
-    sprintf(str, "%04x:%04x", (uint16_t)wave[0], (uint16_t)wave[1]);
-    fm.putString(str);
+    // fm.setColor(0xffffffff);
+    // sprintf(str, "%04x:%04x", (uint16_t)wave[0], (uint16_t)wave[1]);
+    // fm.putString(str);
 
-#if 1
+#if 0
     waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
     auto red   = waveViewBuffer_.makeColor(255, 0, 0);
     auto green = waveViewBuffer_.makeColor(0, 255, 0);

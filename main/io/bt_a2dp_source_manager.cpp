@@ -5,6 +5,7 @@
 
 #include "bt_a2dp_source_manager.h"
 #include <array>
+#include <audio/audio_out.h>
 #include <debug.h>
 #include <esp_a2dp_api.h>
 #include <esp_avrc_api.h>
@@ -19,7 +20,7 @@
 namespace io
 {
 
-struct Impl
+struct Impl : public audio::AudioOutDriver
 {
     enum class State
     {
@@ -51,6 +52,8 @@ struct Impl
 
     int connectingInterval_ = 0;
     int mediaInterval_      = 0;
+
+    float volume_ = 1.0f;
 
 public:
     void onGAPEvent(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t* param)
@@ -346,6 +349,8 @@ public:
                 mediaState_ = MediaState::IDLE;
                 esp_bt_gap_set_scan_mode(ESP_BT_SCAN_MODE_NONE);
                 esp_bt_gap_cancel_discovery();
+
+                audio::AudioOutDriverManager::instance().setDriver(this);
             }
             else if (p.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
             {
@@ -354,6 +359,8 @@ public:
                 esp_bt_gap_set_scan_mode(
                     ESP_BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE);
                 // discoverに戻ってもいいんじゃ？
+
+                audio::AudioOutDriverManager::instance().setDriver(nullptr);
             }
             break;
         }
@@ -429,8 +436,8 @@ public:
 
     size_t updateSampleData(int16_t* data, size_t nSamples)
     {
-        //        DBOUT(("update sample %zd\n", nSamples));
-
+//        DBOUT(("update sample %zd\n", nSamples));
+#if 0
         for (size_t i = 0; i < nSamples; ++i)
         {
             static float phase = 0;
@@ -449,7 +456,39 @@ public:
             data += 2;
         }
         return nSamples;
+#else
+        auto& audioOutMan = audio::AudioOutDriverManager::instance();
+        if (!audioOutMan.lock(this))
+        {
+            return 0;
+        }
+        auto scale = int(volume_ * 256);
+        for (auto ct = nSamples; ct;)
+        {
+            auto n = audioOutMan.generateSamples(ct);
+            ct -= n;
+            auto samples = audioOutMan.getSampleBuffer();
+            while (n)
+            {
+                data[0] = (*samples)[0] * scale >> 16;
+                data[1] = (*samples)[1] * scale >> 16;
+                data += 2;
+                ++samples;
+                --n;
+            }
+        }
+        audioOutMan.unlock();
+        return nSamples;
+#endif
     }
+
+    // AudioOutDriver
+    bool isDriverUseUpdate() const override { return false; };
+    void onAttach() override{};
+    void onDetach() override{};
+    uint32_t getSampleRate() const override { return 44100; };
+    void setVolume(float v) override { volume_ = v; };
+    float getVolume() const override { return volume_; };
 };
 Impl pimpl_;
 
