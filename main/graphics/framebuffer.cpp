@@ -20,24 +20,27 @@ FrameBuffer::FrameBuffer(uint32_t w, uint32_t h, int bpp)
     initialize(w, h, bpp);
 }
 
-void FrameBuffer::initialize(uint32_t w, uint32_t h, int bpp)
+void
+FrameBuffer::initialize(uint32_t w, uint32_t h, int bpp)
 {
     release();
 
     img_.setColorDepth(bpp);
     buffer_ = img_.createSprite(w, h);
-    bpp_ = bpp;
+    bpp_    = bpp;
     setWindow(0, 0, w, h);
 }
 
-void FrameBuffer::release()
+void
+FrameBuffer::release()
 {
     img_.deleteSprite();
     buffer_ = nullptr;
-    bpp_ = 0;
+    bpp_    = 0;
 }
 
-void FrameBuffer::setWindow(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+void
+FrameBuffer::setWindow(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     wx_ = x;
     wy_ = y;
@@ -72,33 +75,50 @@ FrameBuffer::getHeight() const
 uint32_t
 FrameBuffer::getBufferWidth() const
 {
-    return const_cast<Img *>(&img_)->width();
+    return const_cast<Img*>(&img_)->width();
 }
 
 uint32_t
 FrameBuffer::getBufferHeight() const
 {
-    return const_cast<Img *>(&img_)->height();
+    return const_cast<Img*>(&img_)->height();
 }
 
 uint32_t
 FrameBuffer::makeColor(int r, int g, int b) const
 {
-    // todo
+#if 0
+    switch (bpp_)
+    {
+    case 8:
+        return (r & 224) | ((g & 224) >> 3) | (b >> 6);
+
+    case 16:
+        return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+
+    default:
+        return (r << 16) | (g << 8) | b;
+    }
+#else
+    // Sprite は 常に16bit colorを受ける
     return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+#endif
 }
 
-void FrameBuffer::fill(uint32_t c)
+void
+FrameBuffer::fill(uint32_t c)
 {
     img_.fillSprite(c);
 }
 
-void FrameBuffer::fill(int x, int y, int w, int h, uint32_t c)
+void
+FrameBuffer::fill(int x, int y, int w, int h, uint32_t c)
 {
     img_.fillRect(x, y, w, h, c);
 }
 
-void FrameBuffer::setPixel(uint32_t x, uint32_t y, uint32_t c)
+void
+FrameBuffer::setPixel(uint32_t x, uint32_t y, uint32_t c)
 {
     img_.drawPixel(x, y, c);
 }
@@ -106,23 +126,25 @@ void FrameBuffer::setPixel(uint32_t x, uint32_t y, uint32_t c)
 uint32_t
 FrameBuffer::getPixel(uint32_t x, uint32_t y) const
 {
-    return const_cast<Img *>(&img_)->readPixel(x, y);
+    return const_cast<Img*>(&img_)->readPixel(x, y);
 }
 
-void FrameBuffer::blit(const FrameBufferBase &fb, int x, int y)
+void
+FrameBuffer::blit(const FrameBufferBase& fb, int x, int y)
 {
     // todo
 }
 
-bool FrameBuffer::_blitToLCD(InternalLCD *ilcd, int x, int y) const
+bool
+FrameBuffer::_blitToLCD(InternalLCD* ilcd, int x, int y) const
 {
     //    const_cast<Img *>(&img_)->pushSprite(x, y, false);
-    auto *lcd = (TFT_eSPI *)ilcd;
-    auto w = getWidth();
-    auto h = getHeight();
-    auto y1 = y + h;
+    auto* lcd     = (TFT_eSPI*)ilcd;
+    auto w        = getWidth();
+    auto h        = getHeight();
+    auto y1       = y + h;
     auto unitLine = unitTransferPixels_ / w;
-    auto p = (uint8_t *)buffer_;
+    auto p        = (uint8_t*)buffer_;
 
     size_t unitLineSize;
     if (bpp_ == 16)
@@ -145,7 +167,7 @@ bool FrameBuffer::_blitToLCD(InternalLCD *ilcd, int x, int y) const
 
         if (bpp_ == 16)
         {
-            lcd->pushImage(x, y, w, ch, (uint16_t *)p);
+            lcd->pushImage(x, y, w, ch, (uint16_t*)p);
         }
         else
         {

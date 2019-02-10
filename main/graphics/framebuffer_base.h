@@ -70,6 +70,13 @@ public:
     virtual bool _blitToLCD(InternalLCD*, int x, int y) const { return false; }
 };
 
+inline uint32_t
+makeColor(const FrameBufferBase& fb, uint32_t c)
+{
+    auto r = fb.makeColor(c >> 16, (c >> 8) & 255, c & 255);
+    return r;
+}
+
 } // namespace graphics
 
 #endif /* _294F65DF_7133_F008_F8A7_4D243931B5D2 */

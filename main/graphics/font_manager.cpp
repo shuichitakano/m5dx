@@ -6,6 +6,7 @@
 #include "font_manager.h"
 #include "font_data.h"
 #include "framebuffer.h"
+#include <debug.h>
 
 namespace graphics
 {
@@ -40,8 +41,11 @@ sjis2jis(int ch)
 void
 FontManager::putFont(int code, const FontData* f)
 {
+    //    DBOUT(("(%d, %d) %d %p\n", x_, y_, code, f));
     if (!f)
+    {
         return;
+    }
 
     int w = f->width();
     int h = f->height();
@@ -148,16 +152,19 @@ FontManager::computeTextSize(const char* str, int& w, int& h)
 }
 
 void
-FontManager::setFrameBuffer(FrameBufferBase& fb)
+FontManager::setFrameBuffer(FrameBufferBase* fb)
 {
-    frameBuffer_ = &fb;
+    frameBuffer_ = fb;
 
-    vx_ = fb.getLeft();
-    vy_ = fb.getTop();
-    vw_ = fb.getWidth();
-    vh_ = fb.getHeight();
-    x_  = vx_;
-    y_  = vy_;
+    if (fb)
+    {
+        vx_ = fb->getLeft();
+        vy_ = fb->getTop();
+        vw_ = fb->getWidth();
+        vh_ = fb->getHeight();
+        x_  = vx_;
+        y_  = vy_;
+    }
 }
 
 FontManager&

@@ -284,11 +284,12 @@ attachInternalSpeaker()
 void
 initialize()
 {
+    target::startFMClock(4000000);
+    resetSoundChip(); // FMOutputHandlerを動かす前に
+
     InternalSpeakerOut::instance(); // init
     FMOutputHandler::instance();    // init
     setFMClock(4000000, 64);
-
-    resetSoundChip();
 
     AudioOutDriverManager::instance().setAudioStreamOut(&streamOutHandler_);
     attachInternalSpeaker();

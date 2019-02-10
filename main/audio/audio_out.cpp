@@ -13,6 +13,7 @@
 #include <mutex>
 #include <string.h>
 #include <sys/mutex.h>
+#include <util/simple_ring_buffer.h>
 
 namespace audio
 {
@@ -21,8 +22,15 @@ struct AudioOutDriverManager::Impl
 {
     static constexpr size_t UNIT_SAMPLE_COUNT =
         AudioOutDriverManager::getUnitSampleCount();
+    static constexpr size_t HISTORY_SAMPLE_COUNT = 1024;
+    static constexpr size_t DEFAULT_SAMPLE_RATE =
+        AudioOutDriverManager::getSampleRate();
 
-    std::array<int32_t, 2> buffer_[UNIT_SAMPLE_COUNT];
+    using Sample            = AudioOutDriverManager::Sample;
+    using HistorySample     = AudioOutDriverManager::HistorySample;
+    using HistoryRingBuffer = AudioOutDriverManager::HistoryRingBuffer;
+
+    Sample buffer_[UNIT_SAMPLE_COUNT];
 
     AudioOutDriver* driver_{};
     AudioStreamOut* stream_{};
@@ -31,13 +39,17 @@ struct AudioOutDriverManager::Impl
     TaskHandle_t taskHandle_{};
     EventGroupHandle_t eventGroupHandle_{};
 
+    HistorySample historyBuffer_[HISTORY_SAMPLE_COUNT]{};
+    HistoryRingBuffer historyRing_{historyBuffer_, HISTORY_SAMPLE_COUNT};
+    sys::Mutex historyMutex_;
+
 public:
     void start()
     {
         eventGroupHandle_ = xEventGroupCreate();
         assert(eventGroupHandle_);
 
-        static constexpr int prio = 5;
+        static constexpr int prio = 21;
         xTaskCreate([](void* p) { ((Impl*)p)->task(); },
                     "AudioOut",
                     2048,
@@ -52,9 +64,17 @@ public:
         mutex_.lock();
         while (1)
         {
+            //            if (stream_ && (!driver_ ||
+            //            driver_->isDriverUseUpdate()))
             if (stream_ && driver_ && driver_->isDriverUseUpdate())
             {
-                driver_->onUpdate(buffer_, generateSamples(UNIT_SAMPLE_COUNT));
+                auto n = generateSamples(UNIT_SAMPLE_COUNT);
+                if (driver_)
+                {
+                    driver_->onUpdate(buffer_, n);
+                }
+                // todo:
+                // !driver_かつFM音源からの読み出しがなくても固まらないようにする
 
                 mutex_.unlock();
                 mutex_.lock();
@@ -82,13 +102,45 @@ public:
         n = std::min(n, UNIT_SAMPLE_COUNT);
         if (stream_)
         {
-            stream_->onUpdateAudioStream(buffer_, n, driver_->getSampleRate());
+            stream_->onUpdateAudioStream(buffer_,
+                                         n,
+                                         driver_ ? driver_->getSampleRate()
+                                                 : DEFAULT_SAMPLE_RATE);
         }
         else
         {
             memset(buffer_, 0, sizeof(buffer_));
         }
+        pushHistorySamples(buffer_, n);
         return n;
+    }
+
+    void pushHistorySamples(const Sample* s, size_t n)
+    {
+        std::lock_guard<sys::Mutex> lock(historyMutex_);
+
+        auto p   = historyRing_.getBufferTop();
+        auto pos = historyRing_.getCurrentPos();
+
+        auto update = [&](auto* dst, const auto* src, size_t n) {
+            while (n)
+            {
+                (*dst)[0] = (*src)[0] >> 8;
+                (*dst)[1] = (*src)[1] >> 8;
+                ++dst;
+                ++src;
+                --n;
+            }
+        };
+        auto n1 = std::min<int>(n, historyRing_.getMask() + 1 - pos);
+        update(p + pos, s, n1);
+        auto n2 = n - n1;
+        if (n2)
+        {
+            assert(n2 <= HISTORY_SAMPLE_COUNT);
+            update(p, s + n1, n2);
+        }
+        historyRing_.advancePointer(n);
     }
 
     bool lock(const AudioOutDriver* d)
@@ -166,10 +218,28 @@ AudioOutDriverManager::generateSamples(size_t n)
     return pimpl_->generateSamples(n);
 }
 
-const std::array<int32_t, 2>*
+const AudioOutDriverManager::Sample*
 AudioOutDriverManager::getSampleBuffer()
 {
     return pimpl_->buffer_;
+}
+
+const AudioOutDriverManager::HistoryRingBuffer&
+AudioOutDriverManager::getHistoryBuffer() const
+{
+    return pimpl_->historyRing_;
+}
+
+void
+AudioOutDriverManager::lockHistoryBuffer()
+{
+    pimpl_->historyMutex_.lock();
+}
+
+void
+AudioOutDriverManager::unlockHistoryBuffer()
+{
+    pimpl_->historyMutex_.unlock();
 }
 
 AudioOutDriverManager&

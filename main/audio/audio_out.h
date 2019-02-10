@@ -7,6 +7,7 @@
 
 #include "audio_stream.h"
 #include <memory>
+#include <util/simple_ring_buffer.h>
 
 namespace audio
 {
@@ -35,6 +36,11 @@ class AudioOutDriverManager
     std::unique_ptr<Impl> pimpl_;
 
 public:
+    using Sample            = std::array<int32_t, 2>; // 16.8 L/R
+    using HistorySample     = std::array<int16_t, 2>; // 16.0 L/R
+    using HistoryRingBuffer = util::SimpleRingBuffer<HistorySample>;
+
+public:
     void start();
 
     void setAudioStreamOut(AudioStreamOut*);
@@ -43,7 +49,11 @@ public:
     bool lock(const AudioOutDriver*);
     void unlock();
     size_t generateSamples(size_t n);
-    const std::array<int32_t, 2>* getSampleBuffer();
+    const Sample* getSampleBuffer();
+
+    const HistoryRingBuffer& getHistoryBuffer() const;
+    void lockHistoryBuffer();
+    void unlockHistoryBuffer();
 
     static constexpr size_t getUnitSampleCount() { return 128; }
     static constexpr size_t getSampleRate() { return 44100; }
