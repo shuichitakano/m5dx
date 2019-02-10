@@ -16,9 +16,11 @@ class ScrollList : public Widget, public WidgetList
     bool vertical_     = true;
     int displayOffset_ = 0;
     int selectIndex_   = 0;
+    bool needRefresh_  = true;
 
 public:
     void setDirectionIsVertical(bool v) { vertical_ = v; }
+
     // スクロール方向のWidgetサイズを取得
     virtual uint16_t getBaseItemSize() const = 0;
 

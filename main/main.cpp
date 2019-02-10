@@ -16,6 +16,7 @@
 
 #include <ui/context.h>
 #include <ui/file_list.h>
+#include <ui/key.h>
 
 #include <sys/timer.h>
 
@@ -282,7 +283,14 @@ void
 loop()
 {
 
+    static ui::KeyState keyState;
+    keyState.updateNegative(
+        target::getButtonA(), target::getButtonB(), target::getButtonC());
+
     {
+        ui::UpdateContext updateCtx(&keyState);
+        fileList_.onUpdate(updateCtx);
+
         ui::RenderContext renderCtx;
         renderCtx.setFrameBuffer(&graphics::getDisplay());
         auto& fm = renderCtx.getFontManager();
@@ -322,9 +330,16 @@ loop()
     fm.setBGColor(graphics::getDisplay().makeColor(0x20, 0x20, 0x20));
     fm.setPosition(0, 0);
     char str[20];
-    sprintf(str, "F %d\n", counter);
+    sprintf(str, "F %d", counter);
     fm.setEdgedMode(false);
     fm.setTransparentMode(false);
+    fm.putString(str);
+
+    sprintf(str,
+            " %d %d %d",
+            target::getButtonA(),
+            target::getButtonB(),
+            target::getButtonC());
     fm.putString(str);
 
     //    auto* wave = audio::getRecentSampleForTest();

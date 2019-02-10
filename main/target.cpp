@@ -20,21 +20,36 @@ initGPIO()
 {
     uint64_t _1 = 1;
 
-    gpio_config_t cnf{};
-    cnf.mode         = GPIO_MODE_OUTPUT;
-    cnf.pin_bit_mask = ( //
-        (_1 << config::D0) | (_1 << config::D1) | (_1 << config::D2) |
-        (_1 << config::D3) | (_1 << config::D4) | (_1 << config::D5) |
-        (_1 << config::D6) | (_1 << config::D7) | (_1 << config::CS) |
-        (_1 << config::A0) | 0);
-    cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    cnf.pull_up_en   = GPIO_PULLUP_DISABLE;
-    cnf.intr_type    = GPIO_INTR_DISABLE;
+    {
+        gpio_config_t cnf{};
+        cnf.mode         = GPIO_MODE_OUTPUT;
+        cnf.pin_bit_mask = ( //
+            (_1 << config::D0) | (_1 << config::D1) | (_1 << config::D2) |
+            (_1 << config::D3) | (_1 << config::D4) | (_1 << config::D5) |
+            (_1 << config::D6) | (_1 << config::D7) | (_1 << config::CS) |
+            (_1 << config::A0) | 0);
+        cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        cnf.pull_up_en   = GPIO_PULLUP_DISABLE;
+        cnf.intr_type    = GPIO_INTR_DISABLE;
 
-    auto r = gpio_config(&cnf);
-    assert(r == ESP_OK);
-
+        auto r = gpio_config(&cnf);
+        assert(r == ESP_OK);
+    }
     negateFMCS();
+
+    {
+        gpio_config_t cnf{};
+        cnf.mode         = GPIO_MODE_INPUT;
+        cnf.pin_bit_mask = ( //
+            (_1 << config::BUTTON_A) | (_1 << config::BUTTON_B) |
+            (_1 << config::BUTTON_C));
+        cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        cnf.pull_up_en   = GPIO_PULLUP_ENABLE;
+        cnf.intr_type    = GPIO_INTR_DISABLE;
+
+        auto r = gpio_config(&cnf);
+        assert(r == ESP_OK);
+    }
 }
 
 void
@@ -104,6 +119,24 @@ void
 setFMA0(int i)
 {
     gpio_set_level((gpio_num_t)config::A0, i);
+}
+
+bool
+getButtonA()
+{
+    return gpio_get_level((gpio_num_t)config::BUTTON_A);
+}
+
+bool
+getButtonB()
+{
+    return gpio_get_level((gpio_num_t)config::BUTTON_B);
+}
+
+bool
+getButtonC()
+{
+    return gpio_get_level((gpio_num_t)config::BUTTON_C);
 }
 
 void

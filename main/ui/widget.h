@@ -22,6 +22,8 @@ public:
     virtual void onUpdate(UpdateContext& ctx) = 0;
     virtual void onRender(RenderContext& ctx) = 0;
     virtual Dim2 getSize() const              = 0;
+
+    virtual void touch() {}
 };
 
 using WidgetPtr = std::shared_ptr<Widget>;

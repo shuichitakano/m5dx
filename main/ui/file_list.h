@@ -24,6 +24,7 @@ class FileList : public ScrollList
     public:
         Dim2 getSize() const override;
         void onRender(RenderContext& ctx) override;
+        void touch() override { updated_ = true; }
 
         virtual void _render(RenderContext& ctx) = 0;
     };

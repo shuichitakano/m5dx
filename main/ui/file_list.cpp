@@ -19,8 +19,8 @@ FileList::FileList()
 {
     setDirectionIsVertical(true);
 
-    directories_.resize(2);
-    files_.resize(3);
+    directories_.resize(5);
+    files_.resize(15);
 }
 
 Dim2
