@@ -14,6 +14,9 @@
 #include <utility/Config.h>
 #include <utility>
 
+#include <ui/context.h>
+#include <ui/file_list.h>
+
 #include <sys/timer.h>
 
 #include "debug.h"
@@ -34,6 +37,13 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
+
+static std::vector<uint8_t> fontAsciiBin;
+static std::vector<uint8_t> fontKanjiBin;
+static graphics::FontData fontAscii;
+static graphics::FontData fontKanji;
+
+ui::FileList fileList_;
 
 constexpr uint16_t
 makeColor(int r, int g, int b)
@@ -167,25 +177,22 @@ setup()
     // io::BLEManager::instance().startScan();
 
     //    io::removeAllBondedClassicBTDevices();
-    io::dumpBondedClassicBTDevices();
-    io::BTA2DPSourceManager a2dpManager_;
-    a2dpManager_.initialize(&jobManager_);
-    a2dpManager_.start();
+    // io::dumpBondedClassicBTDevices();
+    // io::BTA2DPSourceManager a2dpManager_;
+    // a2dpManager_.initialize(&jobManager_);
+    // a2dpManager_.start();
 
     listDir(SD, "/", 0);
 
-    static std::vector<uint8_t> fontAsciiBin;
-    static std::vector<uint8_t> fontKanjiBin;
     io::readFile(fontAsciiBin, "/data/4x8_font.bin");
     io::readFile(fontKanjiBin, "/data/misaki_font.bin");
-
-    static graphics::FontData fontAscii(fontAsciiBin.data());
-    static graphics::FontData fontKanji(fontKanjiBin.data());
+    fontAscii.setData(fontAsciiBin.data());
+    fontKanji.setData(fontKanjiBin.data());
 
     auto& fm = graphics::getDefaultFontManager();
     fm.setAsciiFontData(&fontAscii);
     fm.setKanjiFontData(&fontKanji);
-    fm.setFrameBuffer(graphics::getDisplay());
+    fm.setFrameBuffer(&graphics::getDisplay());
     fm.setPosition(0, 20);
     fm.setColor(graphics::getDisplay().makeColor(128, 200, 50));
     //    graphics::getDisplay().setWindow(10, 22, 36, 10);
@@ -274,10 +281,21 @@ setup()
 void
 loop()
 {
+
+    {
+        ui::RenderContext renderCtx;
+        renderCtx.setFrameBuffer(&graphics::getDisplay());
+        auto& fm = renderCtx.getFontManager();
+        fm.setAsciiFontData(&fontAscii);
+        fm.setKanjiFontData(&fontKanji);
+
+        fileList_.onRender(renderCtx);
+    }
+
     static int counter = 0;
     ++counter;
 
-#if 1
+#if 0
     if (counter == 100)
     {
         mdxPlayer.start();
@@ -315,19 +333,27 @@ loop()
     // sprintf(str, "%04x:%04x", (uint16_t)wave[0], (uint16_t)wave[1]);
     // fm.putString(str);
 
-#if 0
+#if 1
     waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
     auto red   = waveViewBuffer_.makeColor(255, 0, 0);
     auto green = waveViewBuffer_.makeColor(0, 255, 0);
     //    sprintf(str, ": r %d g %d", red, green);
     // fm.putString(str);
+
+    audio::AudioOutDriverManager::instance().lockHistoryBuffer();
+    static std::array<int16_t, 2> tmpWave[128];
+    audio::AudioOutDriverManager::instance().getHistoryBuffer().copyLatest(
+        tmpWave, 128);
+    audio::AudioOutDriverManager::instance().unlockHistoryBuffer();
+
+    auto* wave = tmpWave;
     for (int i = 0; i < 128; ++i)
     {
-        int y0 = std::min(127, std::max(0, 64 + (int)(wave[0] >> 9)));
-        int y1 = std::min(127, std::max(0, 64 + (int)(wave[1] >> 9)));
+        int y0 = std::min(127, std::max(0, 64 + (int)((*wave)[0] >> 9)));
+        int y1 = std::min(127, std::max(0, 64 + (int)((*wave)[1] >> 9)));
         waveViewBuffer_.setPixel(i, y0, red);
         waveViewBuffer_.setPixel(i, y1, green);
-        wave += 2;
+        ++wave;
     }
 
     graphics::getDisplay().blit(waveViewBuffer_, 320 - 128, 240 - 128);

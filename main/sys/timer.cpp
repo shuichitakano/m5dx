@@ -23,25 +23,26 @@ namespace
 class TimerImpl
 {
     timer_group_t timerGrp_ = TIMER_GROUP_0;
-    timer_idx_t timerIdx_ = TIMER_0;
+    timer_idx_t timerIdx_   = TIMER_0;
 
-    int currentPeriod_ = -1;
+    int currentPeriod_      = -1;
     bool currentAutoReload_ = false;
 
     bool initialized_ = false;
-    bool started_ = false;
+    bool started_     = false;
 
     std::function<void()> callback_;
 
     SemaphoreHandle_t semaphore_{};
 
-  public:
+public:
     TimerImpl(int grp = 0, int idx = 0)
-        : timerGrp_((timer_group_t)(TIMER_GROUP_0 + grp)), timerIdx_((timer_idx_t)(TIMER_0 + idx))
+        : timerGrp_((timer_group_t)(TIMER_GROUP_0 + grp))
+        , timerIdx_((timer_idx_t)(TIMER_0 + idx))
     {
     }
 
-    void setCallback(std::function<void()> &&f) { callback_ = f; }
+    void setCallback(std::function<void()>&& f) { callback_ = f; }
 
     void init(int div, bool autoReload)
     {
@@ -50,7 +51,7 @@ class TimerImpl
             semaphore_ = xSemaphoreCreateBinary();
             assert(semaphore_);
 
-            constexpr int prio = 10;
+            constexpr int prio = 20;
             auto r =
                 xTaskCreate(timerTaskEntry, "timer", 4096, this, prio, nullptr);
             assert(r);
@@ -58,11 +59,11 @@ class TimerImpl
         }
 
         timer_config_t config{};
-        config.divider = div;
+        config.divider     = div;
         config.counter_dir = TIMER_COUNT_UP;
-        config.counter_en = TIMER_PAUSE;
-        config.alarm_en = TIMER_ALARM_EN;
-        config.intr_type = TIMER_INTR_LEVEL;
+        config.counter_en  = TIMER_PAUSE;
+        config.alarm_en    = TIMER_ALARM_EN;
+        config.intr_type   = TIMER_INTR_LEVEL;
         config.auto_reload = autoReload;
         timer_init(timerGrp_, timerIdx_, &config);
 
@@ -115,12 +116,12 @@ class TimerImpl
         started_ = false;
     }
 
-    static void IRAM_ATTR timerISR(void *p) { ((TimerImpl *)p)->timerFunc(); }
+    static void IRAM_ATTR timerISR(void* p) { ((TimerImpl*)p)->timerFunc(); }
 
     void timerFunc()
     {
-        auto &tg = timerGrp_ == TIMER_GROUP_0 ? TIMERG0 : TIMERG1;
-        auto &timer = tg.hw_timer[timerIdx_];
+        auto& tg    = timerGrp_ == TIMER_GROUP_0 ? TIMERG0 : TIMERG1;
+        auto& timer = tg.hw_timer[timerIdx_];
 
         xSemaphoreGiveFromISR(semaphore_, nullptr);
 
@@ -135,7 +136,7 @@ class TimerImpl
         timer.config.alarm_en = TIMER_ALARM_EN;
     }
 
-    static void timerTaskEntry(void *p) { ((TimerImpl *)p)->timerTask(); }
+    static void timerTaskEntry(void* p) { ((TimerImpl*)p)->timerTask(); }
 
     void timerTask()
     {
@@ -158,7 +159,8 @@ TimerImpl timer0_;
 
 } // namespace
 
-void initTimer(int baseClock)
+void
+initTimer(int baseClock)
 {
     auto div = TIMER_BASE_CLK / baseClock;
     DBOUT(("initTimer: baseClock %d, div %d\n", baseClock, div));
@@ -166,33 +168,39 @@ void initTimer(int baseClock)
     timer0_.init(div, true);
 }
 
-void startTimer()
+void
+startTimer()
 {
     timer0_.start();
 }
 
-void stopTimer()
+void
+stopTimer()
 {
     timer0_.stop();
 }
 
-void enableTimerInterrupt()
+void
+enableTimerInterrupt()
 {
     timer0_.enableInt();
 }
 
-void disableTimerInterrupt()
+void
+disableTimerInterrupt()
 {
     timer0_.disableInt();
 }
 
-void setTimerPeriod(int v, bool autoUpdate)
+void
+setTimerPeriod(int v, bool autoUpdate)
 {
     timer0_.setPeriod(v);
     timer0_.setAutoReload(autoUpdate);
 }
 
-void setTimerCallback(std::function<void()> &&f)
+void
+setTimerCallback(std::function<void()>&& f)
 {
     timer0_.setCallback(std::move(f));
 }

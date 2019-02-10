@@ -1,13 +1,13 @@
-#ifndef D8D14E5A_A133_F008_F7FC_B44CBB78814B
-#define D8D14E5A_A133_F008_F7FC_B44CBB78814B
-
 /*
  * author : Shuichi TAKANO
  * since  : Sun Oct 28 2018 16:25:22
  */
+#ifndef D8D14E5A_A133_F008_F7FC_B44CBB78814B
+#define D8D14E5A_A133_F008_F7FC_B44CBB78814B
 
 #include "framebuffer_base.h"
 #include <M5Display.h>
+#undef min
 
 namespace graphics
 {

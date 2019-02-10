@@ -5,6 +5,9 @@
 #ifndef _4ED5A5A1_8134_1395_3063_9BC590170DC6
 #define _4ED5A5A1_8134_1395_3063_9BC590170DC6
 
+#include <algorithm>
+#include <string.h>
+
 namespace util
 {
 
@@ -32,6 +35,19 @@ public:
     T& getCurrent() { return buffer_[cur_]; }
     const T& getCurrent() const { return buffer_[cur_]; }
     void advancePointer(int n) { cur_ = (cur_ + n) & mask_; }
+
+    void copyLatest(T* dst, int n) const
+    {
+        int p0  = (cur_ - n) & mask_;
+        auto n1 = std::min(n, mask_ + 1 - p0);
+        auto n2 = n - n1;
+        memcpy(dst, buffer_ + p0, n1 * sizeof(T));
+        if (n2)
+        {
+            dst += n1;
+            memcpy(dst, buffer_, n2 * sizeof(T));
+        }
+    }
 
 private:
     T* buffer_;

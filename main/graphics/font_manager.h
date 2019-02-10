@@ -44,7 +44,7 @@ public:
     void setEdgedMode(bool f = true) { edged_ = f; }
     void setMultiLineMode(bool f = true) { multiLine_ = f; }
 
-    void setFrameBuffer(FrameBufferBase& fb);
+    void setFrameBuffer(FrameBufferBase* fb);
 
 protected:
     void putFont(int code, const FontData* f);

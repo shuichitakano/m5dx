@@ -7,19 +7,22 @@
 
 #include "framebuffer_base.h"
 #include <M5Display.h> // utility/spriteには include guardがない
+#undef min
 
 namespace graphics
 {
 
 class FrameBuffer final : public FrameBufferBase
 {
-  public:
+public:
     FrameBuffer();
     FrameBuffer(uint32_t w, uint32_t h, int bpp);
     ~FrameBuffer() noexcept override { release(); }
 
     void initialize(uint32_t w, uint32_t h, int bpp);
     void release();
+
+    int getBitPerPixel() const { return bpp_; }
 
     void setWindow(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
     uint32_t getLeft() const override;
@@ -37,12 +40,12 @@ class FrameBuffer final : public FrameBufferBase
     void setPixel(uint32_t x, uint32_t y, uint32_t c) override;
     uint32_t getPixel(uint32_t x, uint32_t y) const override;
 
-    void blit(const FrameBufferBase &fb, int x, int y) override;
+    void blit(const FrameBufferBase& fb, int x, int y) override;
 
-  protected:
-    bool _blitToLCD(InternalLCD *, int x, int y) const override;
+protected:
+    bool _blitToLCD(InternalLCD*, int x, int y) const override;
 
-  private:
+private:
     using Img = TFT_eSprite;
     Img img_;
 
@@ -51,8 +54,8 @@ class FrameBuffer final : public FrameBufferBase
     uint32_t ww_ = 0;
     uint32_t wh_ = 0;
 
-    int bpp_ = 0;
-    void *buffer_ = nullptr;
+    int bpp_                     = 0;
+    void* buffer_                = nullptr;
     uint32_t unitTransferPixels_ = 1280; // 40Mで2500pixelが1ms
 };
 
