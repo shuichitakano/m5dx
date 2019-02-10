@@ -19,6 +19,8 @@ class FrameBufferBase;
 namespace ui
 {
 
+class KeyState;
+
 class Context
 {
     Vec2 curPos_{0, 0};
@@ -113,7 +115,15 @@ public:
 
 class UpdateContext : public Context
 {
-    // key
+    const KeyState* keyState_{};
+
+public:
+    UpdateContext(const KeyState* ks)
+        : keyState_(ks)
+    {
+    }
+    void setKeyState(const KeyState* ks) { keyState_ = ks; }
+    const KeyState* getKeyState() const { return keyState_; }
 };
 
 class RenderContext : public Context

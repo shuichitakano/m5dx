@@ -30,6 +30,10 @@ constexpr int SD_CLK  = 26;
 constexpr int SD_DATA = 35;
 constexpr int SD_WS   = 36;
 
+constexpr int BUTTON_A = 39;
+constexpr int BUTTON_B = 38;
+constexpr int BUTTON_C = 37;
+
 } // namespace config
 
 void initGPIO();
@@ -44,6 +48,10 @@ void negateFMCS();
 void assertFMCS();
 
 void setFMA0(int i);
+
+bool getButtonA();
+bool getButtonB();
+bool getButtonC();
 
 } // namespace target
 
