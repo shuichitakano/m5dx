@@ -14,16 +14,26 @@ namespace ui
 
 class Window : public Widget
 {
-    Vec2 pos_;
     std::string title_;
+    bool hasFrame_    = false;
+    bool needRefresh_ = true;
 
+    Widget* child_{};
+    Dim2 size_{};
 
 public:
+    Window() = default;
+    Window(const std::string& title, Widget* w);
+
+    void setTitle(const std::string& str);
+    void setChild(Widget* w, bool fitToClient = true);
+    void enableFrame(bool f = true);
+
     void onUpdate(UpdateContext& ctx) override;
     void onRender(RenderContext& ctx) override;
+    Dim2 getSize() const override { return size_; };
 
-    Vec2& getPosition() { return pos_; }
-    const Vec2& getPosition() const { return pos_; }
+    void refresh() { needRefresh_ = true; }
 };
 
 } // namespace ui

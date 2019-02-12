@@ -116,6 +116,7 @@ MDXPlayer::freeAudioChips()
 bool
 MDXPlayer::start()
 {
+    DBOUT(("start MDX!\n"));
     freeAudioChips();
 
     ym2151_.setChip(audio::allocateYM2151());
@@ -134,6 +135,7 @@ MDXPlayer::start()
 bool
 MDXPlayer::terminate()
 {
+    DBOUT(("terminate MDX!\n"));
     stop();
     MXDRV_End();
     ByteArray().swap(mdx_);
@@ -246,10 +248,10 @@ MDXPlayer::getPlayTime() const
     return g->PLAYTIME * (1024 / 4000000.0f); // Timer B
 }
 
-const char*
+FileFormat
 MDXPlayer::getFormat() const
 {
-    return "mdx";
+    return FileFormat::MDX;
 }
 
 sound_sys::SoundSystem*
@@ -419,7 +421,7 @@ MDXPlayer::getCurrentTrack() const
 std::experimental::optional<std::string>
 MDXPlayer::loadTitle(const char* filename)
 {
-    std::vector<char> buf(61 + 3 /* 0xd, 0xa, 0x1a */);
+    std::vector<char> buf(81 + 3 /* 0xd, 0xa, 0x1a */);
     int readBytes = io::readFile(buf.data(), filename, buf.size());
     if (readBytes < 0)
     {

@@ -15,7 +15,7 @@ class Widget;
 class WidgetList
 {
 public:
-    virtual ~WidgetList() = default;
+    virtual ~WidgetList() noexcept = default;
 
     virtual size_t getWidgetCount() const           = 0;
     virtual const Widget* getWidget(size_t i) const = 0;

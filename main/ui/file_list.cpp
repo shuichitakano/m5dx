@@ -5,22 +5,23 @@
 
 #include "file_list.h"
 #include "context.h"
+#include <SD.h>
+#include <debug.h>
+#include <music_player/music_player_manager.h>
+#include <sys/job_manager.h>
 
 namespace ui
 {
 
 namespace
 {
-constexpr Dim2 widgetSize_ = {320, 240};
-constexpr Dim2 listSize_   = {320, 24};
+constexpr Dim2 widgetSize_ = {320, 240 - WindowSettings::TITLE_BAR_HEIGHT};
+constexpr Dim2 listSize_   = {320 - WindowSettings::SCROLL_BAR_WIDTH, 24};
 } // namespace
 
 FileList::FileList()
 {
     setDirectionIsVertical(true);
-
-    directories_.resize(5);
-    files_.resize(15);
 }
 
 Dim2
@@ -70,6 +71,114 @@ FileList::_getWidget(size_t i)
     return nullptr;
 }
 
+std::pair<std::string, bool>
+FileList::getItem(size_t i)
+{
+    if (i < directories_.size())
+    {
+        return {directories_[i].name_, true};
+    }
+
+    i -= directories_.size();
+    if (i < files_.size())
+    {
+        return {files_[i].filename_, false};
+    }
+    return {};
+}
+
+void
+FileList::setPath(const std::string& path)
+{
+    // 排他は上流で確保する
+
+    sys::getDefaultJobManager().waitIdle();
+
+    path_       = path;
+    parseIndex_ = 0;
+
+    directories_.clear();
+    files_.clear();
+
+    DBOUT(("open path = %s\n", path.c_str()));
+    auto root = SD.open(path.c_str());
+    if (!root || !root.isDirectory())
+    {
+        DBOUT(("open file list error: %s.\n", path.c_str()));
+        return;
+    }
+
+    if (path != "/")
+    {
+        directories_.emplace_back("..");
+    }
+
+    while (auto file = root.openNextFile())
+    {
+        auto name = strrchr(file.name(), '/');
+        //        DBOUT(("name = %s\n", name));
+        if (name)
+        {
+            ++name;
+        }
+
+        if (!name || name[0] == '.')
+        {
+            continue;
+        }
+
+        if (file.isDirectory())
+        {
+            directories_.emplace_back(name);
+        }
+        else
+        {
+            if (auto p = music_player::findMusicPlayerFromFile(name))
+            {
+                files_.emplace_back(name, file.size(), p->getFormat());
+            }
+        }
+    }
+}
+
+void
+FileList::onUpdate(UpdateContext& ctx)
+{
+    super::onUpdate(ctx);
+
+    auto& jm = sys::getDefaultJobManager();
+    if (jm.isIdle() && parseIndex_ < files_.size())
+    {
+        int i = parseIndex_;
+        jm.add([this, i] {
+            auto& f = files_[i];
+            auto fn = makeAbsPath(f.filename_);
+            if (auto p = music_player::findMusicPlayerFromFile(fn.c_str()))
+            {
+                if (auto r = p->loadTitle(fn.c_str()))
+                {
+                    f.title_ = r.value();
+                    f.touch();
+                }
+            }
+        });
+        ++parseIndex_;
+    }
+}
+
+std::string
+FileList::makeAbsPath(const std::string& name) const
+{
+    if (path_ == "/")
+    {
+        return path_ + name;
+    }
+    else
+    {
+        return path_ + "/" + name;
+    }
+}
+
 ////
 Dim2
 FileList::Item::getSize() const
@@ -98,10 +207,8 @@ FileList::Item::onRender(RenderContext& ctx)
             ctx.applyClipRegion();
         }
 
-        auto* fb  = ctx.getFrameBuffer();
-        auto& pos = ctx.getCurrentPosition();
         ctx.applyClipRegion();
-        fb->blit(tmpFB, pos.x, pos.y);
+        ctx.blit({0, 0}, tmpFB);
 
         updated_ = false;
         return;
@@ -114,18 +221,18 @@ FileList::File::_render(RenderContext& ctx)
 {
     auto& fm = ctx.getFontManager();
 
-    // ♫ タイトル             MDX
-    // hoge.mdx      12345 bytes
+    // ♫ タイトル
+    // hoge.mdx      12345 bytes MDX
 
-    static constexpr int W             = listSize_.w;
+    static constexpr int W             = listSize_.w - 2;
     static constexpr int line0Y        = 3;
     static constexpr int line1Y        = 13;
+    static constexpr Vec2 titlePos     = {14, line0Y};
+    static constexpr Dim2 titleSize    = {W - titlePos.x, 8};
     static constexpr Dim2 formatSize   = {5 * 4, 8};
-    static constexpr Vec2 formatPos    = {W - formatSize.w - 2, line0Y};
-    static constexpr Vec2 titlePos     = {16, line0Y};
-    static constexpr Dim2 titleSize    = {formatPos.x - titlePos.x, 8};
+    static constexpr Vec2 formatPos    = {W - formatSize.w, line1Y};
     static constexpr Dim2 fileSizeSize = {16 * 4, 8};
-    static constexpr Vec2 fileSizePos  = {W - fileSizeSize.w - 2, line1Y};
+    static constexpr Vec2 fileSizePos  = {formatPos.x - fileSizeSize.w, line1Y};
     static constexpr Vec2 fileNamePos  = {2, line1Y};
     static constexpr Dim2 fileNameSize = {fileSizePos.x - fileNamePos.x, 8};
     static constexpr Vec2 iconPos      = {2, line0Y};
@@ -146,7 +253,7 @@ FileList::File::_render(RenderContext& ctx)
         0b01100000,
         0b00000000,
     };
-    ctx.drawBits(iconPos, 8, 8, icon, ctx.makeColor(iconColor));
+    ctx.drawBits(iconPos, 8, 8, icon, iconColor);
 
     fm.setEdgedMode(false);
     fm.setTransparentMode(true);
@@ -191,7 +298,7 @@ FileList::Directory::_render(RenderContext& ctx)
         0b11111111,
         0b00000000,
     };
-    ctx.drawBits(iconPos, 8, 8, icon, ctx.makeColor(iconColor));
+    ctx.drawBits(iconPos, 8, 8, icon, iconColor);
 
     fm.setEdgedMode(false);
     fm.setTransparentMode(true);

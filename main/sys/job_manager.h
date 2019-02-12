@@ -25,6 +25,7 @@ class JobManager
 
     bool started_ = false;
     bool exitReq_ = false;
+    bool idle_    = true;
 
 public:
     ~JobManager();
@@ -36,10 +37,15 @@ public:
 
     void add(Job&& f);
 
+    void waitIdle();
+    bool isIdle() const { return idle_; }
+
 protected:
     void task();
     static void taskEntry(void* p);
-};
+}; // namespace sys
+
+JobManager& getDefaultJobManager();
 
 } // namespace sys
 

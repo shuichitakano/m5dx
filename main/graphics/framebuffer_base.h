@@ -67,7 +67,11 @@ protected:
     struct InternalLCD;
 
 public:
-    virtual bool _blitToLCD(InternalLCD*, int x, int y) const { return false; }
+    virtual bool _blitToLCD(
+        InternalLCD*, int dx, int dy, int wx, int wy, int ww, int wh) const
+    {
+        return false;
+    }
 };
 
 inline uint32_t

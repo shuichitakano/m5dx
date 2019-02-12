@@ -46,17 +46,20 @@ public:
 
     void init(int div, bool autoReload)
     {
-        if (!initialized_)
+        if (initialized_)
         {
-            semaphore_ = xSemaphoreCreateBinary();
-            assert(semaphore_);
-
-            constexpr int prio = 20;
-            auto r =
-                xTaskCreate(timerTaskEntry, "timer", 4096, this, prio, nullptr);
-            assert(r);
-            initialized_ = true;
+            setDivider(div);
+            setAutoReload(autoReload);
+            return;
         }
+
+        semaphore_ = xSemaphoreCreateBinary();
+        assert(semaphore_);
+
+        constexpr int prio = 20;
+        auto r =
+            xTaskCreate(timerTaskEntry, "timer", 4096, this, prio, nullptr);
+        assert(r);
 
         timer_config_t config{};
         config.divider     = div;
@@ -72,6 +75,7 @@ public:
         timer_set_counter_value(timerGrp_, timerIdx_, 0);
         timer_isr_register(
             timerGrp_, timerIdx_, timerISR, this, ESP_INTR_FLAG_IRAM, nullptr);
+        initialized_ = true;
     }
 
     void setPeriod(uint32_t v)
@@ -94,6 +98,8 @@ public:
             currentAutoReload_ = f;
         }
     }
+
+    void setDivider(int div) { timer_set_divider(timerGrp_, timerIdx_, div); }
 
     void start()
     {

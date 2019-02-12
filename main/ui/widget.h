@@ -17,7 +17,7 @@ class RenderContext;
 class Widget
 {
 public:
-    virtual ~Widget() = default;
+    virtual ~Widget() noexcept = default;
 
     virtual void onUpdate(UpdateContext& ctx) = 0;
     virtual void onRender(RenderContext& ctx) = 0;

@@ -7,6 +7,7 @@
 
 #include "widget.h"
 #include "widget_list.h"
+#include <functional>
 
 namespace ui
 {
@@ -18,6 +19,11 @@ class ScrollList : public Widget, public WidgetList
     int selectIndex_   = 0;
     bool needRefresh_  = true;
 
+    using Func = std::function<void(int)>;
+
+    Func decideFunc_;
+    Func longPressFunc_;
+
 public:
     void setDirectionIsVertical(bool v) { vertical_ = v; }
 
@@ -26,6 +32,17 @@ public:
 
     void onUpdate(UpdateContext& ctx) override;
     void onRender(RenderContext& ctx) override;
+
+    void setDecideFunc(Func&& f) { decideFunc_ = std::move(f); }
+    void setLongPressFunc(Func&& f) { longPressFunc_ = std::move(f); }
+
+    void refresh() { needRefresh_ = true; }
+    void reset()
+    {
+        displayOffset_ = 0;
+        selectIndex_   = 0;
+        needRefresh_   = true;
+    }
 };
 
 } // namespace ui

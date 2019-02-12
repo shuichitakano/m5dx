@@ -164,7 +164,37 @@ RenderContext::drawBits(
     Vec2 pos, int w, int h, const uint8_t* bits, uint32_t color)
 {
     pos += getCurrentPosition();
-    getFrameBuffer()->drawBits(pos.x, pos.y, w, h, bits, color);
+    getFrameBuffer()->drawBits(pos.x, pos.y, w, h, bits, makeColor(color));
+}
+
+void
+RenderContext::fill(Vec2 pos, const Dim2& size, uint32_t color)
+{
+    pos += getCurrentPosition();
+    getFrameBuffer()->fill(pos.x, pos.y, size.w, size.h, makeColor(color));
+}
+
+void
+RenderContext::drawRect(Vec2 pos, const Dim2& size, uint32_t color)
+{
+    pos += getCurrentPosition();
+    auto* fb = getFrameBuffer();
+    auto c   = makeColor(color);
+    auto x0  = pos.x;
+    auto x1  = pos.x + size.w - 1;
+    auto y0  = pos.y;
+    auto y1  = pos.y + size.h - 1;
+    fb->fill(x0, y0, size.w, 1, c);
+    fb->fill(x0, y0, 1, size.h, c);
+    fb->fill(x1, y0, 1, size.h, c);
+    fb->fill(x0, y1, size.w, 1, c);
+}
+
+void
+RenderContext::blit(Vec2 pos, const graphics::FrameBufferBase& fb)
+{
+    pos += getCurrentPosition();
+    getFrameBuffer()->blit(fb, pos.x, pos.y);
 }
 
 } // namespace ui

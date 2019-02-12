@@ -15,6 +15,7 @@ namespace
 {
 constexpr int EVENT_ADD_JOB = 1 << 0;
 constexpr int EVENT_EXIT    = 1 << 1;
+constexpr int EVENT_IDLE    = 1 << 2;
 } // namespace
 
 JobManager::~JobManager()
@@ -69,6 +70,16 @@ JobManager::add(Job&& f)
 }
 
 void
+JobManager::waitIdle()
+{
+    xEventGroupWaitBits(eventGroupHandle_,
+                        EVENT_IDLE,
+                        pdFALSE /* clear */,
+                        pdFALSE /* wait for all bit */,
+                        portMAX_DELAY);
+}
+
+void
 JobManager::task()
 {
     mutex_.lock();
@@ -76,18 +87,22 @@ JobManager::task()
     {
         if (jobs_.empty())
         {
+            idle_ = true;
             mutex_.unlock();
 
+            xEventGroupSetBits(eventGroupHandle_, EVENT_IDLE);
             xEventGroupWaitBits(eventGroupHandle_,
                                 EVENT_ADD_JOB,
                                 pdTRUE /* clear */,
                                 pdFALSE /* wait for all bit */,
                                 portMAX_DELAY);
+            xEventGroupClearBits(eventGroupHandle_, EVENT_IDLE);
 
             mutex_.lock();
         }
         else
         {
+            idle_ = false;
             mutex_.unlock();
             jobs_.front()();
             mutex_.lock();
@@ -97,6 +112,17 @@ JobManager::task()
     mutex_.unlock();
 
     xEventGroupSetBits(eventGroupHandle_, EVENT_EXIT);
+}
+
+namespace
+{
+JobManager defaultJobManager_;
+}
+
+JobManager&
+getDefaultJobManager()
+{
+    return defaultJobManager_;
 }
 
 } // namespace sys

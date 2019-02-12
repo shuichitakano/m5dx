@@ -94,7 +94,7 @@ Display::getPixel(uint32_t x, uint32_t y) const
 void
 Display::blit(const FrameBufferBase& fb, int x, int y)
 {
-    if (!fb._blitToLCD((InternalLCD*)_getLCD(), x, y))
+    if (!fb._blitToLCD((InternalLCD*)_getLCD(), x, y, wx_, wy_, ww_, wh_))
     {
         FrameBufferBase::blit(fb, x, y);
     }

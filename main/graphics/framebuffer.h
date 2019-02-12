@@ -43,7 +43,23 @@ public:
     void blit(const FrameBufferBase& fb, int x, int y) override;
 
 protected:
-    bool _blitToLCD(InternalLCD*, int x, int y) const override;
+    bool _blitToLCD(InternalLCD*,
+                    int dx,
+                    int dy,
+                    int wx,
+                    int wy,
+                    int ww,
+                    int wh) const override;
+
+    void pushImage(TFT_eSPI* ilcd,
+                   int dx,
+                   int dy,
+                   int w,
+                   int h,
+                   void* p,
+                   size_t stride,
+                   int wx,
+                   int wy) const;
 
 private:
     using Img = TFT_eSprite;
