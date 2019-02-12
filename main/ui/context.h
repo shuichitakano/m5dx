@@ -116,14 +116,19 @@ public:
 class UpdateContext : public Context
 {
     const KeyState* keyState_{};
+    bool enableInput_ = true;
 
 public:
     UpdateContext(const KeyState* ks)
         : keyState_(ks)
     {
     }
+
     void setKeyState(const KeyState* ks) { keyState_ = ks; }
     const KeyState* getKeyState() const { return keyState_; }
+
+    bool isEnableInput() const { return enableInput_; }
+    void disableInput() { enableInput_ = false; }
 };
 
 class RenderContext : public Context
@@ -168,6 +173,11 @@ public:
                  TextAlignV alignV = TextAlignV::TOP);
 
     void drawBits(Vec2 pos, int w, int h, const uint8_t* bits, uint32_t color);
+
+    void fill(Vec2 pos, const Dim2& size, uint32_t color);
+    void drawRect(Vec2 pos, const Dim2& size, uint32_t color);
+
+    void blit(Vec2 pos, const graphics::FrameBufferBase& fb);
 
 protected:
     struct FBRestoreState

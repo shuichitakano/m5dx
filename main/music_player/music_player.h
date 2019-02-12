@@ -5,6 +5,7 @@
 #ifndef _4C44B068_0133_F071_1262_0E78152C1627
 #define _4C44B068_0133_F071_1262_0E78152C1627
 
+#include "file_format.h"
 #include <experimental/optional>
 #include <stdint.h>
 #include <string>
@@ -41,7 +42,7 @@ public:
     virtual int getCurrentTrack() const                = 0;
     virtual float getPlayTime() const                  = 0;
     virtual const char* getTitle() const               = 0;
-    virtual const char* getFormat() const              = 0;
+    virtual FileFormat getFormat() const               = 0;
     virtual sound_sys::SoundSystem* getSystem(int idx) = 0;
 };
 

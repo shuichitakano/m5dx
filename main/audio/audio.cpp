@@ -48,7 +48,8 @@ class InternalSpeakerOut : public AudioOutDriver
 {
     static constexpr i2s_port_t port_ = I2S_NUM_0;
 
-    float volume_ = 1.0f;
+    //    float volume_ = 1.0f;
+    float volume_ = 0.5f;
 
 public:
     InternalSpeakerOut()

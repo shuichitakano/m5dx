@@ -135,8 +135,72 @@ FrameBuffer::blit(const FrameBufferBase& fb, int x, int y)
     // todo
 }
 
+void
+FrameBuffer::pushImage(TFT_eSPI* lcd,
+                       int dx,
+                       int dy,
+                       int w,
+                       int h,
+                       void* p,
+                       size_t stride,
+                       int wx,
+                       int wy) const
+{
+    auto draw = [&](int x, int y, int w, int h, uint8_t* p) {
+        if (bpp_ == 16)
+        {
+            lcd->pushImage(x, y, w, h, (uint16_t*)p);
+        }
+        else
+        {
+            lcd->pushImage(x, y, w, h, p, bpp_ == 8);
+        }
+    };
+
+    auto pp = (uint8_t*)p;
+
+    if (dy < wy)
+    {
+        int d = wy - dy;
+        h -= d;
+        if (h <= 0)
+        {
+            return;
+        }
+        dy = wy;
+        pp += stride * d;
+    }
+
+    if (dx < wx)
+    {
+        int d = wx - dx;
+        if (bpp_ == 1)
+        {
+            d &= ~7;
+        }
+        w -= d;
+        if (w <= 0)
+        {
+            return;
+        }
+        dx = wx;
+        pp += (bpp_ * d) >> 3;
+
+        for (; h; --h)
+        {
+            draw(dx, dy, w, 1, pp);
+            pp += stride;
+        }
+    }
+    else
+    {
+        draw(dx, dy, w, h, pp);
+    }
+}
+
 bool
-FrameBuffer::_blitToLCD(InternalLCD* ilcd, int x, int y) const
+FrameBuffer::_blitToLCD(
+    InternalLCD* ilcd, int x, int y, int wx, int wy, int ww, int wh) const
 {
     //    const_cast<Img *>(&img_)->pushSprite(x, y, false);
     auto* lcd     = (TFT_eSPI*)ilcd;
@@ -146,25 +210,15 @@ FrameBuffer::_blitToLCD(InternalLCD* ilcd, int x, int y) const
     auto unitLine = unitTransferPixels_ / w;
     auto p        = (uint8_t*)buffer_;
 
-    size_t unitLineSize;
-    if (bpp_ == 16)
-    {
-        unitLineSize = w * 2 * unitLine;
-    }
-    else if (bpp_ == 8)
-    {
-        unitLineSize = w * unitLine;
-    }
-    else
-    {
-        unitLineSize = ((w + 7) >> 3) * unitLine;
-    }
+    size_t stride       = (w * bpp_ + 7) >> 3;
+    size_t unitLineSize = stride * unitLine;
 
     while (y < y1)
     {
         auto yn = std::min<int>(y1, y + unitLine);
         auto ch = yn - y;
 
+#if 0
         if (bpp_ == 16)
         {
             lcd->pushImage(x, y, w, ch, (uint16_t*)p);
@@ -173,6 +227,9 @@ FrameBuffer::_blitToLCD(InternalLCD* ilcd, int x, int y) const
         {
             lcd->pushImage(x, y, w, ch, p, bpp_ == 8);
         }
+#else
+        pushImage(lcd, x, y, w, ch, p, stride, wx, wy);
+#endif
 
         y = yn;
         p += unitLineSize;

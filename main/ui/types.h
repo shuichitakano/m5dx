@@ -55,7 +55,7 @@ max(const Vec2& a, const Vec2& b)
 
 struct Dim2
 {
-    size_t w, h;
+    uint32_t w, h;
 };
 
 struct BBox

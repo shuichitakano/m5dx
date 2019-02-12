@@ -6,6 +6,7 @@
 #include "scroll_list.h"
 #include "context.h"
 #include "key.h"
+#include "scroll_bar.h"
 #include <debug.h>
 
 namespace ui
@@ -14,10 +15,18 @@ namespace ui
 void
 ScrollList::onUpdate(UpdateContext& ctx)
 {
-    auto n    = getWidgetCount();
-    auto* key = ctx.getKeyState();
-    if (key)
+    auto n = getWidgetCount();
+
+    for (int i = 0; i < n; ++i)
     {
+        getWidget(i)->onUpdate(ctx);
+    }
+
+    auto* key = ctx.getKeyState();
+    if (key && ctx.isEnableInput())
+    {
+        ctx.disableInput();
+
         if (key->isTrigger(0) && n)
         {
             getWidget(selectIndex_)->touch();
@@ -40,12 +49,19 @@ ScrollList::onUpdate(UpdateContext& ctx)
         }
         else if (key->isLongPress(1))
         {
-            DBOUT(("exit.\n"));
+            if (longPressFunc_)
+            {
+                DBOUT(("long press %d\n", n ? selectIndex_ : -1));
+                longPressFunc_(selectIndex_);
+            }
         }
         else if (key->isReleaseEdge(1))
         {
-            DBOUT(("decide!\n"));
-            needRefresh_ = true;
+            if (decideFunc_)
+            {
+                DBOUT(("decide %d\n", n ? selectIndex_ : -1));
+                decideFunc_(selectIndex_);
+            }
         }
     }
 
@@ -81,7 +97,6 @@ ScrollList::onRender(RenderContext& ctx)
     if (needRefresh_)
     {
         ctx.updateInvalidatedRegion(getSize());
-        needRefresh_ = false;
     }
 
     auto recoverSelectIndex = ctx.updateSelectIndex(selectIndex_);
@@ -118,6 +133,29 @@ ScrollList::onRender(RenderContext& ctx)
     {
         // todo: アイテムごとの大きさが違う場合
     }
+
+    if (needRefresh_)
+    {
+        ctx.applyClipRegion();
+
+        auto wsize = getSize();
+        auto& ws   = ctx.getWindowSettings();
+
+        // listのあまり領域
+        Vec2 p{0, int(n * step + displayOffset_)};
+        if (p.y < wsize.h)
+        {
+            ctx.fill(
+                p,
+                {wsize.w - WindowSettings::SCROLL_BAR_WIDTH, wsize.h - p.y},
+                ws.borderColor);
+        }
+
+        // スクロールバー
+        drawVScrollBar(ctx, wsize, -displayOffset_, wsize.h, step * n);
+    }
+
+    needRefresh_ = false;
 }
 
 } // namespace ui

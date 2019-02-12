@@ -4,8 +4,6 @@
 #include <audio/audio.h>
 #include <audio/audio_out.h>
 #include <graphics/display.h>
-#include <graphics/font_data.h>
-#include <graphics/font_manager.h>
 #include <graphics/framebuffer.h>
 #include <io/ble_manager.h>
 #include <io/ble_midi.h>
@@ -14,14 +12,11 @@
 #include <utility/Config.h>
 #include <utility>
 
-#include <ui/context.h>
-#include <ui/file_list.h>
-#include <ui/key.h>
+#include "application.h"
 
 #include <sys/timer.h>
 
 #include "debug.h"
-#include <music_player/mdxplayer.h>
 
 #undef min
 #include <io/bt_a2dp_source_manager.h>
@@ -39,22 +34,11 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
-static std::vector<uint8_t> fontAsciiBin;
-static std::vector<uint8_t> fontKanjiBin;
-static graphics::FontData fontAscii;
-static graphics::FontData fontKanji;
-
-ui::FileList fileList_;
-
 constexpr uint16_t
 makeColor(int r, int g, int b)
 {
     return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
 }
-
-static music_player::MDXPlayer mdxPlayer;
-
-static sys::JobManager jobManager_;
 
 // void
 // spriteTest()
@@ -76,46 +60,6 @@ static sys::JobManager jobManager_;
 //     img.deleteSprite();
 // }
 
-void
-listDir(fs::FS& fs, const char* dirname, uint8_t levels)
-{
-    Serial.printf("Listing directory: %s\n", dirname);
-
-    File root = fs.open(dirname);
-    if (!root)
-    {
-        Serial.println("Failed to open directory");
-        return;
-    }
-    if (!root.isDirectory())
-    {
-        Serial.println("Not a directory");
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file)
-    {
-        if (file.isDirectory())
-        {
-            Serial.print("  DIR : ");
-            Serial.println(file.name());
-            if (levels)
-            {
-                listDir(fs, file.name(), levels - 1);
-            }
-        }
-        else
-        {
-            Serial.print("  FILE: ");
-            Serial.print(file.name());
-            Serial.print("  SIZE: ");
-            Serial.println(file.size());
-        }
-        file = root.openNextFile();
-    }
-}
-
 namespace
 {
 graphics::FrameBuffer waveViewBuffer_;
@@ -125,12 +69,11 @@ graphics::FrameBuffer waveViewBuffer_;
 void
 setup()
 {
-
     Serial.begin(115200);
     Serial.flush();
     Serial.print("M5Stack initializing...\n");
 
-    jobManager_.start();
+    sys::getDefaultJobManager().start(0, 4096, "JobManager0");
 
     graphics::getDisplay().initialize();
     //    graphics::getDisplay().setWindow(120, 30, 20, 20);
@@ -155,14 +98,6 @@ setup()
     audio::AudioOutDriverManager::instance().start();
     audio::initialize();
 
-#if 0
-    jobManager_.add([] {
-        printf("job1\n");
-        delay(1000);
-    });
-    jobManager_.add([] { printf("job2\n"); });
-#endif
-
     if (!io::initializeBluetooth() || !io::BLEManager::instance().initialize())
     {
         DBOUT(("bluetooth initialize error."));
@@ -183,32 +118,9 @@ setup()
     // a2dpManager_.initialize(&jobManager_);
     // a2dpManager_.start();
 
-    listDir(SD, "/", 0);
-
-    io::readFile(fontAsciiBin, "/data/4x8_font.bin");
-    io::readFile(fontKanjiBin, "/data/misaki_font.bin");
-    fontAscii.setData(fontAsciiBin.data());
-    fontKanji.setData(fontKanjiBin.data());
-
-    auto& fm = graphics::getDefaultFontManager();
-    fm.setAsciiFontData(&fontAscii);
-    fm.setKanjiFontData(&fontKanji);
-    fm.setFrameBuffer(&graphics::getDisplay());
-    fm.setPosition(0, 20);
-    fm.setColor(graphics::getDisplay().makeColor(128, 200, 50));
-    //    graphics::getDisplay().setWindow(10, 22, 36, 10);
-    fm.putString("日本語表示テスト\n123ABCDEF漢字");
-    //    graphics::getDisplay().setWindow(0, 0, 320, 240);
-
-    //    graphics::getDisplay().fill(0x11223344);
-
-    // uint32_t test = 0x12345678;
-    // uint32_t testr = __builtin_bitreverse(test);
-    // printf("rev %08x\n", testr);
-
-    //    spriteTest();
-
     //
+
+    M5DX::initialize();
 
     uint8_t cardType = SD.cardType();
 
@@ -257,8 +169,7 @@ setup()
     return;
 #endif
 
-    //
-    //    auto mdxFilename = "/STC00.MDX";
+#if 0
     auto mdxFilename = "/mdx/Arsys/Knight Arms/KNA08.MDX";
 
     if (mdxPlayer.loadMDX(mdxFilename))
@@ -266,50 +177,20 @@ setup()
         DBOUT(("load success.\n"));
     }
 
-    fm.setPosition(0, 100);
-    fm.setColor(graphics::getDisplay().makeColor(0xff, 0x80, 0x00));
-    fm.putString(mdxPlayer.getTitle());
-
-    return;
-    delay(500);
-
     //
     mdxPlayer.start();
     mdxPlayer.play(-1);
+#endif
 }
 
 // The loop routine runs over and over again forever
 void
 loop()
 {
-
-    static ui::KeyState keyState;
-    keyState.updateNegative(
-        target::getButtonA(), target::getButtonB(), target::getButtonC());
-
-    {
-        ui::UpdateContext updateCtx(&keyState);
-        fileList_.onUpdate(updateCtx);
-
-        ui::RenderContext renderCtx;
-        renderCtx.setFrameBuffer(&graphics::getDisplay());
-        auto& fm = renderCtx.getFontManager();
-        fm.setAsciiFontData(&fontAscii);
-        fm.setKanjiFontData(&fontKanji);
-
-        fileList_.onRender(renderCtx);
-    }
+    M5DX::tick();
 
     static int counter = 0;
     ++counter;
-
-#if 0
-    if (counter == 100)
-    {
-        mdxPlayer.start();
-        mdxPlayer.play(-1);
-    }
-#endif
 
     if ((counter % 100) == 0 && 0)
     {
@@ -325,35 +206,10 @@ loop()
         }
     }
 
-    auto& fm = graphics::getDefaultFontManager();
-    fm.setColor(graphics::getDisplay().makeColor(0x40, 0xff, 0xa0));
-    fm.setBGColor(graphics::getDisplay().makeColor(0x20, 0x20, 0x20));
-    fm.setPosition(0, 0);
-    char str[20];
-    sprintf(str, "F %d", counter);
-    fm.setEdgedMode(false);
-    fm.setTransparentMode(false);
-    fm.putString(str);
-
-    sprintf(str,
-            " %d %d %d",
-            target::getButtonA(),
-            target::getButtonB(),
-            target::getButtonC());
-    fm.putString(str);
-
-    //    auto* wave = audio::getRecentSampleForTest();
-
-    // fm.setColor(0xffffffff);
-    // sprintf(str, "%04x:%04x", (uint16_t)wave[0], (uint16_t)wave[1]);
-    // fm.putString(str);
-
-#if 1
+#if 0
     waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
     auto red   = waveViewBuffer_.makeColor(255, 0, 0);
     auto green = waveViewBuffer_.makeColor(0, 255, 0);
-    //    sprintf(str, ": r %d g %d", red, green);
-    // fm.putString(str);
 
     audio::AudioOutDriverManager::instance().lockHistoryBuffer();
     static std::array<int16_t, 2> tmpWave[128];

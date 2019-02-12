@@ -58,7 +58,7 @@ public:
     int getCurrentTrack() const override;
     float getPlayTime() const override;
     const char* getTitle() const override;
-    const char* getFormat() const override;
+    FileFormat getFormat() const override;
     sound_sys::SoundSystem* getSystem(int idx) override;
 
     const std::string& getPDXPath() const { return pdxPath_; }
