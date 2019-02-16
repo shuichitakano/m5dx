@@ -8,6 +8,7 @@
 #include <SD.h>
 #include <debug.h>
 #include <music_player/music_player_manager.h>
+#include <mutex>
 #include <sys/job_manager.h>
 
 namespace ui
@@ -22,6 +23,11 @@ constexpr Dim2 listSize_   = {320 - WindowSettings::SCROLL_BAR_WIDTH, 24};
 FileList::FileList()
 {
     setDirectionIsVertical(true);
+}
+
+FileList::~FileList()
+{
+    cancelAndWaitIdle();
 }
 
 Dim2
@@ -88,35 +94,102 @@ FileList::getItem(size_t i)
 }
 
 void
+FileList::cancelAndWaitIdle()
+{
+    abortReq_ = true;
+    sys::getDefaultJobManager().waitIdle();
+    abortReq_ = false;
+}
+
+#if 0
+std::string
+FileList::getParentDir()
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+
+    auto p = path_.rfind('/');
+    if (p != std::string::npos)
+    {
+        return p == 0 ? "/" : path_.substr(0, p);
+    }
+    return path_;
+}
+#endif
+
+std::pair<std::string, std::string>
+FileList::getSeparatePath()
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+    auto path = getPath();
+
+    std::string parent;
+    std::string body;
+    auto pos = path.rfind('/');
+    if (pos != std::string::npos)
+    {
+        body = path.substr(pos + 1);
+        if (pos == 0)
+        {
+            parent = "/";
+        }
+        else
+        {
+            parent = path.substr(0, pos);
+        }
+    }
+    else
+    {
+        parent = "/";
+        body   = path;
+    }
+    return {parent, body};
+}
+
+void
 FileList::setPath(const std::string& path)
 {
-    // 排他は上流で確保する
-
-    sys::getDefaultJobManager().waitIdle();
+    cancelAndWaitIdle();
+    std::lock_guard<sys::Mutex> lock(getMutex());
 
     path_       = path;
     parseIndex_ = 0;
+    abortReq_   = false;
 
     directories_.clear();
     files_.clear();
 
-    DBOUT(("open path = %s\n", path.c_str()));
-    auto root = SD.open(path.c_str());
-    if (!root || !root.isDirectory())
+    if (path == "/")
     {
-        DBOUT(("open file list error: %s.\n", path.c_str()));
-        return;
+        isRootDir_ = true;
     }
-
-    if (path != "/")
+    else
     {
         directories_.emplace_back("..");
+        isRootDir_ = false;
+    }
+
+    sys::getDefaultJobManager().add([this] { loadFileList(); });
+}
+
+void
+FileList::loadFileList()
+{
+    DBOUT(("open path = %s\n", path_.c_str()));
+    auto root = SD.open(path_.c_str());
+    if (!root || !root.isDirectory())
+    {
+        DBOUT(("open file list error: %s.\n", path_.c_str()));
+        return;
     }
 
     while (auto file = root.openNextFile())
     {
+        if (abortReq_)
+        {
+            break;
+        }
+
         auto name = strrchr(file.name(), '/');
-        //        DBOUT(("name = %s\n", name));
         if (name)
         {
             ++name;
@@ -129,15 +202,94 @@ FileList::setPath(const std::string& path)
 
         if (file.isDirectory())
         {
-            directories_.emplace_back(name);
+            appendDirectory(name);
+            refresh();
         }
         else
         {
             if (auto p = music_player::findMusicPlayerFromFile(name))
             {
-                files_.emplace_back(name, file.size(), p->getFormat());
+                std::lock_guard<sys::Mutex> lock(getMutex());
+                appendFile(name, file.size(), p->getFormat());
+                refresh();
             }
         }
+    }
+}
+
+namespace
+{
+
+struct NameLess
+{
+    bool cmp(const std::string& a, const std::string& b)
+    {
+        // todo: sjis の比較を考慮する
+        return strcasecmp(a.c_str(), b.c_str()) < 0;
+    }
+
+    bool operator()(const FileList::Directory& a, const std::string& b)
+    {
+        return cmp(a.name_, b);
+    }
+    bool operator()(const std::string& a, const FileList::Directory& b)
+    {
+        return cmp(a, b.name_);
+    }
+
+    bool operator()(const FileList::File& a, const std::string& b)
+    {
+        return cmp(a.filename_, b);
+    }
+    bool operator()(const std::string& a, const FileList::File& b)
+    {
+        return cmp(a, b.filename_);
+    }
+};
+
+} // namespace
+
+void
+FileList::appendDirectory(std::string&& name)
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+    auto begin = directories_.begin();
+    auto end   = directories_.end();
+    if (isRootDir_ && begin != end)
+    {
+        ++begin;
+    }
+    auto p = std::upper_bound(begin, end, name, NameLess());
+
+    int idx = int(p - directories_.begin());
+    listInserted(idx);
+
+    bool isFollowFile = followFile_ == name;
+    directories_.emplace(p, std::move(name));
+    if (isFollowFile)
+    {
+        setIndex(idx);
+        followFile_.clear();
+    }
+}
+
+void
+FileList::appendFile(std::string&& name,
+                     size_t size,
+                     music_player::FileFormat fmt)
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+    auto p = std::upper_bound(files_.begin(), files_.end(), name, NameLess());
+
+    int idx = int(p - files_.begin()) + directories_.size();
+    listInserted(idx);
+
+    bool isFollowFile = followFile_ == name;
+    files_.emplace(p, std::move(name), size, fmt);
+    if (isFollowFile)
+    {
+        setIndex(idx);
+        followFile_.clear();
     }
 }
 
@@ -151,6 +303,7 @@ FileList::onUpdate(UpdateContext& ctx)
     {
         int i = parseIndex_;
         jm.add([this, i] {
+            std::lock_guard<sys::Mutex> lock(getMutex());
             auto& f = files_[i];
             auto fn = makeAbsPath(f.filename_);
             if (auto p = music_player::findMusicPlayerFromFile(fn.c_str()))
@@ -302,9 +455,15 @@ FileList::Directory::_render(RenderContext& ctx)
 
     fm.setEdgedMode(false);
     fm.setTransparentMode(true);
+    if (name_.length() < 36)
+    {
+        fm.setAKConvertMode(true);
+    }
 
     ctx.setFontColor(nameColor);
     ctx.putText(name_.c_str(), namePos, nameSize, TextAlignH::LEFT);
+
+    fm.setAKConvertMode(false);
 }
 
 } // namespace ui

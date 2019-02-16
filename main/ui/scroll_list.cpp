@@ -8,18 +8,53 @@
 #include "key.h"
 #include "scroll_bar.h"
 #include <debug.h>
+#include <mutex>
 
 namespace ui
 {
 
 void
+ScrollList::touchSelectWidget()
+{
+    auto w = getWidget(selectIndex_);
+    if (w)
+    {
+        w->touch();
+    }
+}
+
+void
+ScrollList::setIndex(int i)
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+    if (i >= 0 && i < getWidgetCount())
+    {
+        touchSelectWidget();
+        selectIndex_ = i;
+        touchSelectWidget();
+    }
+}
+
+void
+ScrollList::listInserted(int i)
+{
+    if (i <= selectIndex_ && i < getWidgetCount())
+    {
+        ++selectIndex_;
+        displayOffset_ -= getBaseItemSize();
+    }
+}
+
+void
 ScrollList::onUpdate(UpdateContext& ctx)
 {
-    auto n = getWidgetCount();
-
-    for (int i = 0; i < n; ++i)
     {
-        getWidget(i)->onUpdate(ctx);
+        std::lock_guard<sys::Mutex> lock(getMutex());
+        auto n = getWidgetCount();
+        for (int i = 0; i < n; ++i)
+        {
+            getWidget(i)->onUpdate(ctx);
+        }
     }
 
     auto* key = ctx.getKeyState();
@@ -27,31 +62,44 @@ ScrollList::onUpdate(UpdateContext& ctx)
     {
         ctx.disableInput();
 
-        if (key->isTrigger(0) && n)
+        if (key->isTrigger(0))
         {
-            getWidget(selectIndex_)->touch();
-            --selectIndex_;
-            if (selectIndex_ < 0)
+            std::lock_guard<sys::Mutex> lock(getMutex());
+            selectChanged();
+            auto n = getWidgetCount();
+            if (n)
             {
-                selectIndex_ = n - 1;
+                touchSelectWidget();
+                --selectIndex_;
+                if (selectIndex_ < 0)
+                {
+                    selectIndex_ = n - 1;
+                }
+                touchSelectWidget();
             }
-            getWidget(selectIndex_)->touch();
         }
-        else if (key->isTrigger(2) && n)
+        else if (key->isTrigger(2))
         {
-            getWidget(selectIndex_)->touch();
-            ++selectIndex_;
-            if (selectIndex_ >= n)
+            std::lock_guard<sys::Mutex> lock(getMutex());
+            selectChanged();
+            auto n = getWidgetCount();
+            if (n)
             {
-                selectIndex_ = 0;
+                touchSelectWidget();
+                ++selectIndex_;
+                if (selectIndex_ >= n)
+                {
+                    selectIndex_ = 0;
+                }
+                touchSelectWidget();
             }
-            getWidget(selectIndex_)->touch();
         }
-        else if (key->isLongPress(1))
+        else if (key->isLongPressEdge(1))
         {
             if (longPressFunc_)
             {
-                DBOUT(("long press %d\n", n ? selectIndex_ : -1));
+                DBOUT(("long press %d\n", selectIndex_));
+                ctx.acceptLongPress();
                 longPressFunc_(selectIndex_);
             }
         }
@@ -59,7 +107,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
         {
             if (decideFunc_)
             {
-                DBOUT(("decide %d\n", n ? selectIndex_ : -1));
+                DBOUT(("decide %d\n", selectIndex_));
                 decideFunc_(selectIndex_);
             }
         }
@@ -92,7 +140,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
 void
 ScrollList::onRender(RenderContext& ctx)
 {
-    // todo: scrollbarを描く
+    std::lock_guard<sys::Mutex> lock(getMutex());
 
     if (needRefresh_)
     {

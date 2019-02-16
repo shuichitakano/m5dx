@@ -14,24 +14,36 @@ class KeyState
 {
     uint32_t current_ = 0;
     uint32_t prev_    = 0;
+    uint32_t edge_    = 0;
     // 正論理
 
     uint32_t startTimeUS_     = 0;
     uint32_t currentTimeUS_   = 0;
     uint32_t lastPulseTimeUS_ = 0;
 
-    bool longPress_   = false;
-    bool repeatPulse_ = false;
+    bool longPress_     = false;
+    bool prevLongPress_ = false;
+    bool repeatPulse_   = false;
+    bool pressMask_     = true;
 
 public:
     void update(bool b0, bool b1, bool b2);
     void updateNegative(bool b0, bool b1, bool b2) { update(!b0, !b1, !b2); }
 
     bool isPressed(int i) const { return current_ & (1 << i); }
-    bool isEdge(int i) const { return (current_ ^ prev_) & (1 << i); }
+    bool isEdge(int i) const { return edge_ & (1 << i); }
     bool isPressEdge(int i) const { return isPressed(i) && isEdge(i); }
     bool isReleaseEdge(int i) const { return !isPressed(i) && isEdge(i); }
     bool isLongPress(int i) const { return isPressed(i) && longPress_; }
+    bool isLongPressEdge(int i) const
+    {
+        return isLongPress(i) && (longPress_ ^ prevLongPress_);
+    }
+    bool isLongPressReleaseEdge(int i) const
+    {
+        return prevLongPress_ && isReleaseEdge(i);
+    }
+    void acceptLongPress() { pressMask_ = false; }
 
     // repeat付き
     bool isTrigger(int i) const;

@@ -23,14 +23,28 @@ KeyState::update(bool b0, bool b1, bool b2)
 {
     prev_    = current_;
     current_ = ((b0 ? 1 << 0 : 0) | (b1 ? 1 << 1 : 0) | (b2 ? 1 << 2 : 0) | 0);
+    if (current_)
+    {
+        if (!pressMask_)
+        {
+            current_ = 0;
+        }
+    }
+    else
+    {
+        pressMask_ = true;
+    }
+    edge_ = pressMask_ ? prev_ ^ current_ : 0;
+    //    DBOUT(("c:%x p:%x e:%x m:%d\n", current_, prev_, edge_, pressMask_));
 
-    repeatPulse_ = false;
-    longPress_   = false;
+    repeatPulse_   = false;
+    prevLongPress_ = longPress_;
+    longPress_     = false;
 
     currentTimeUS_ = sys::micros();
     if (current_)
     {
-        if (current_ ^ prev_)
+        if (edge_)
         {
             startTimeUS_     = currentTimeUS_;
             lastPulseTimeUS_ = currentTimeUS_ + repeatBegin_ - repeatInterval_;

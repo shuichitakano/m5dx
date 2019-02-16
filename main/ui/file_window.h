@@ -19,9 +19,6 @@ public:
     FileWindow(const std::string& path);
 
     void setPath(const std::string& path);
-
-    void onUpdate(UpdateContext& ctx) override;
-    void onRender(RenderContext& ctx) override;
 };
 
 } // namespace ui

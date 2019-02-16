@@ -7,6 +7,11 @@
 
 #include "music_player.h"
 
+namespace sys
+{
+class Mutex;
+}
+
 namespace music_player
 {
 
@@ -17,6 +22,8 @@ void setActiveMusicPlayer(MusicPlayer* p);
 
 bool
 playMusicFile(const char* filename, int track = -1, bool terminateOld = true);
+
+sys::Mutex& getMutex();
 
 } // namespace music_player
 

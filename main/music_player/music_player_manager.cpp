@@ -26,6 +26,12 @@ sys::Mutex mutex_;
 
 } // namespace
 
+sys::Mutex&
+getMutex()
+{
+    return mutex_;
+}
+
 MusicPlayer*
 findMusicPlayerFromFile(const char* filename)
 {

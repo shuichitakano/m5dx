@@ -13,6 +13,7 @@ namespace graphics
 
 namespace
 {
+
 int
 sjis2jis(int ch)
 {
@@ -34,6 +35,23 @@ sjis2jis(int ch)
     else
         c1 -= 0x40;
     return ((c0 << 8) | c1) + 0x2121;
+}
+
+int
+akcnv(int ch)
+{
+    static const char* table =
+        "　！＂＃＄％＆＇（）＊＋，ー．／０１２３４５６７８９：；＜＝＞？"
+        "＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［￥］＾＿"
+        "｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝〜　";
+
+    if (ch < 32 || ch >= 127)
+    {
+        return 0;
+    }
+
+    auto p = (uint8_t*)(table + ((ch - 32) << 1));
+    return (p[0] << 8) | p[1];
 }
 
 } // namespace
@@ -107,9 +125,13 @@ void
 FontManager::put(int code)
 {
     if (code < 0x80)
+    {
         putAscii(code);
+    }
     else
+    {
         putKanji(code);
+    }
 }
 
 void
@@ -128,10 +150,23 @@ FontManager::putString(const char* str)
         }
         else
         {
+            if (akcnv_ && !shift)
+            {
+                if (int cnvch = akcnv(c))
+                {
+                    code  = cnvch;
+                    c     = 0;
+                    shift = true;
+                }
+            }
             if (shift)
+            {
                 putKanji(sjis2jis(code | c));
+            }
             else
+            {
                 putAscii(c);
+            }
             shift = false;
         }
         ++str;
