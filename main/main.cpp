@@ -206,7 +206,7 @@ loop()
         }
     }
 
-#if 0
+#if 1
     waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
     auto red   = waveViewBuffer_.makeColor(255, 0, 0);
     auto green = waveViewBuffer_.makeColor(0, 255, 0);
@@ -227,6 +227,7 @@ loop()
         ++wave;
     }
 
+    graphics::getDisplay().setWindow(0, 0, 320, 240);
     graphics::getDisplay().blit(waveViewBuffer_, 320 - 128, 240 - 128);
 #endif
 

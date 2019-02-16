@@ -33,6 +33,7 @@ class FileList : public ScrollList
         virtual void _render(RenderContext& ctx) = 0;
     };
 
+public:
     struct File : public Item
     {
         std::string filename_;
@@ -57,27 +58,37 @@ class FileList : public ScrollList
         std::string name_;
 
     public:
-        Directory(std::string&& name) { name_ = std::move(name); }
+        Directory(std::string&& name)
+            : name_(std::move(name))
+        {
+        }
         void onUpdate(UpdateContext& ctx) override {}
         void _render(RenderContext& ctx) override;
     };
 
-    sys::Mutex mutex_;
-
+private:
     std::vector<Directory> directories_;
     std::vector<File> files_;
 
+    bool isRootDir_ = false;
     std::string path_;
+    std::string followFile_; // カーソルを合わせるファイル
 
-    size_t parseIndex_ = 0;
+    volatile bool abortReq_ = false;
+    size_t parseIndex_      = 0;
 
 public:
     FileList();
+    ~FileList();
 
     void setPath(const std::string& path);
+    std::string getParentDir();
+    std::pair<std::string, std::string> getSeparatePath();
+    void setFollowFile(const std::string& s) { followFile_ = s; }
     std::pair<std::string, bool> getItem(size_t i);
     const std::string& getPath() const { return path_; }
     std::string makeAbsPath(const std::string& name) const;
+    void cancelAndWaitIdle();
 
     Dim2 getSize() const override;
 
@@ -88,11 +99,16 @@ public:
     Widget* getWidget(size_t i) override;
     void onUpdate(UpdateContext& ctx) override;
 
-    sys::Mutex& getMutex() { return mutex_; }
-
 protected:
     Widget* _getWidget(size_t i);
-}; // namespace ui
+    void loadFileList();
+
+    void selectChanged() override { followFile_.clear(); }
+
+    void appendDirectory(std::string&& name);
+    void
+    appendFile(std::string&& name, size_t size, music_player::FileFormat fmt);
+};
 
 } // namespace ui
 

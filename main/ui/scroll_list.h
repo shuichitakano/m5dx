@@ -8,6 +8,7 @@
 #include "widget.h"
 #include "widget_list.h"
 #include <functional>
+#include <sys/mutex.h>
 
 namespace ui
 {
@@ -24,6 +25,8 @@ class ScrollList : public Widget, public WidgetList
     Func decideFunc_;
     Func longPressFunc_;
 
+    sys::Mutex mutex_;
+
 public:
     void setDirectionIsVertical(bool v) { vertical_ = v; }
 
@@ -36,6 +39,9 @@ public:
     void setDecideFunc(Func&& f) { decideFunc_ = std::move(f); }
     void setLongPressFunc(Func&& f) { longPressFunc_ = std::move(f); }
 
+    int getIndex() const { return selectIndex_; }
+    void setIndex(int i);
+
     void refresh() { needRefresh_ = true; }
     void reset()
     {
@@ -43,6 +49,14 @@ public:
         selectIndex_   = 0;
         needRefresh_   = true;
     }
+
+    void listInserted(int i);
+
+    sys::Mutex& getMutex() { return mutex_; }
+
+protected:
+    virtual void selectChanged() {}
+    void touchSelectWidget();
 };
 
 } // namespace ui

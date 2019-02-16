@@ -43,6 +43,7 @@ public:
     void setTransparentMode(bool f = true) { transparent_ = f; }
     void setEdgedMode(bool f = true) { edged_ = f; }
     void setMultiLineMode(bool f = true) { multiLine_ = f; }
+    void setAKConvertMode(bool f = true) { akcnv_ = f; }
 
     void setFrameBuffer(FrameBufferBase* fb);
 
@@ -60,6 +61,7 @@ private:
     bool transparent_ = true;
     bool edged_       = false;
     bool multiLine_   = true;
+    bool akcnv_       = false;
 
     int vx_ = 0;
     int vy_ = 0;

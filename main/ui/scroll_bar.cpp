@@ -31,6 +31,10 @@ _drawVScrollBar(RenderContext& ctx,
                 int barSize,
                 int regionSize)
 {
+    if (regionSize < 1)
+    {
+        regionSize = 1;
+    }
     int p0 = std::max<int>(0, barPos * size.h / regionSize);
     int p1 =
         std::min<int>(size.h - 1, (barPos + barSize) * size.h / regionSize);

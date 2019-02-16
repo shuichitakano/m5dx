@@ -115,20 +115,24 @@ public:
 
 class UpdateContext : public Context
 {
-    const KeyState* keyState_{};
+    KeyState* keyState_{};
     bool enableInput_ = true;
 
 public:
-    UpdateContext(const KeyState* ks)
+    UpdateContext(KeyState* ks)
         : keyState_(ks)
     {
     }
 
-    void setKeyState(const KeyState* ks) { keyState_ = ks; }
-    const KeyState* getKeyState() const { return keyState_; }
+    void setKeyState(KeyState* ks) { keyState_ = ks; }
+    const KeyState* getKeyState() const
+    {
+        return enableInput_ ? keyState_ : nullptr;
+    }
 
     bool isEnableInput() const { return enableInput_; }
     void disableInput() { enableInput_ = false; }
+    void acceptLongPress();
 };
 
 class RenderContext : public Context

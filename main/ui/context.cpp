@@ -4,6 +4,7 @@
  */
 
 #include "context.h"
+#include "key.h"
 #include <debug.h>
 
 namespace ui
@@ -16,6 +17,17 @@ Context::setFontRegion(const Vec2& pos, const Dim2& size)
     auto p   = getCurrentPosition() + pos;
     fm.setWindow(p.x, p.y, size.w, size.h);
     fm.setPosition(p.x, p.y);
+}
+
+///////////////
+
+void
+UpdateContext::acceptLongPress()
+{
+    if (keyState_)
+    {
+        keyState_->acceptLongPress();
+    }
 }
 
 /////////////////

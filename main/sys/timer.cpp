@@ -8,7 +8,10 @@
 #include <assert.h>
 #include <driver/periph_ctrl.h>
 #include <driver/timer.h>
+#include <music_player/music_player_manager.h>
+#include <mutex>
 #include <soc/timer_group_struct.h>
+#include <sys/mutex.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -152,6 +155,7 @@ public:
             xSemaphoreTake(semaphore_, portMAX_DELAY);
             if (callback_)
             {
+                std::lock_guard<sys::Mutex> lock(music_player::getMutex());
                 callback_();
             }
         }

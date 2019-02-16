@@ -103,7 +103,8 @@ public:
         static constexpr float baseScale = 0.3f; // 歪み避け
 
         int scale = int(volume_ * baseScale * 128);
-        int bias  = int(volume_ * baseScale * 32768);
+        // int bias  = 32768;
+        int bias = int(volume_ * baseScale * 32768);
         // 0.5Vccを中心にせず、0-Volume で振る (ノイズ対策)
 
         const auto* src = data;
