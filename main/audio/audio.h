@@ -13,6 +13,7 @@ namespace audio
 
 void initialize();
 void setFMClock(uint32_t freq, int sampleRateDiv);
+void setFMVolume(float v);
 void attachInternalSpeaker();
 
 // const int16_t* getRecentSampleForTest();

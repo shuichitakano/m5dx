@@ -1,25 +1,12 @@
 ﻿/* -*- mode:C++; -*-
- *
- * c140_emu.cxx
- *
  * author(s) : Shuichi TAKANO
  * since 2015/01/12(Mon) 17:15:35
- *
- * $Id$
- */
-
-/*
- * include
  */
 
 #include "c140_emu.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
-/*
- * code
- */
 
 namespace sound_sys
 {
@@ -469,7 +456,3 @@ C140::getStatusString(int ch, char* buf, int n) const
 }
 
 } /* namespace sound_sys */
-
-/*
- * End of c140_emu.cxx
- */

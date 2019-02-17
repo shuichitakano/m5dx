@@ -8,11 +8,14 @@
 #include "mdxplayer.h"
 #include "../debug.h"
 #include <algorithm>
+#include <audio/sample_generator.h>
 #include <audio/sound_chip_manager.h>
 #include <io/file_util.h>
 #include <mxdrv/mxdrv.h>
 #include <mxdrv/sys.h>
 #include <string.h>
+
+#include <audio/audio.h>
 
 namespace music_player
 {
@@ -109,7 +112,8 @@ MDXPlayer::isSupported(const char* filename)
 void
 MDXPlayer::freeAudioChips()
 {
-    m6258_.setCallback(nullptr);
+    pcm8_.setCallback(nullptr);
+    audio::getSampleGeneratorManager().remove(&pcm8_);
     freeYM2151(ym2151_.detachChip());
 }
 
@@ -120,11 +124,15 @@ MDXPlayer::start()
     freeAudioChips();
 
     ym2151_.setChip(audio::allocateYM2151());
-    //    m6258_.setInterface(getAudioChipManager().allocateM6258());
+    pcm8_.initialize();
+    audio::getSampleGeneratorManager().add(&pcm8_);
 
     auto& sys  = getMXDRVSoundSystemSet();
     sys.ym2151 = &ym2151_;
-    sys.m6258  = &m6258_;
+    sys.m6258  = &pcm8_;
+
+    audio::setFMVolume(0.5f);
+    pcm8_.setVolume(0.5f);
 
     auto pcm8 = (UBYTE*)MXDRV_GetWork(MXDRV_WORK_PCM8);
     *pcm8     = 1;
@@ -263,7 +271,7 @@ MDXPlayer::getSystem(int idx)
         return &ym2151_;
 
     case 1:
-        return &m6258_;
+        return &pcm8_;
     }
     return 0;
 }
