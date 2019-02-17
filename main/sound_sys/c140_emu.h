@@ -1,32 +1,14 @@
 ﻿/* -*- mode:C++; -*-
- *
- * c140_emu.h
- *
  * author(s) : Shuichi TAKANO
  * since 2015/01/12(Mon) 12:44:08
- *
- * $Id$
  */
 #ifndef _VGM_C140_EMU_H
 #define _VGM_C140_EMU_H
-
-/**
- * @file
- * @brief
- */
-
-/*
- * include
- */
 
 #include "../audio_system.h"
 #include "../data_block.h"
 #include "../sample_gen.h"
 #include <stdint.h>
-
-/*
- * class
- */
 
 namespace sound_sys
 {
@@ -148,6 +130,3 @@ protected:
 } /* namespace sound_sys */
 
 #endif /* _VGM_C140_EMU_H */
-/*
- * End of c140_emu.h
- */

@@ -58,7 +58,7 @@ extern "C"
     {
         auto* p = getMXDRVSoundSystemSet().m6258;
         p->setChMask(data & 2 ? false : true, data & 1 ? false : true);
-        p->setSampleRate((sound_sys::M6258::SampleRate)((data >> 2) & 3));
+        p->setSampleRate6258((data >> 2) & 3);
     }
 
     int X68Sound_Pcm8_Out(int ch, void* adrs, int mode, int len)

@@ -9,7 +9,7 @@
 #define _4560C35E_C133_F071_1515_1239749E5F78
 
 #include "music_player.h"
-#include <sound_sys/m6258.h>
+#include <sound_sys/swpcm8.h>
 #include <sound_sys/ym2151.h>
 #include <stdint.h>
 #include <string>
@@ -35,7 +35,7 @@ class MDXPlayer : public MusicPlayer
     uint32_t playTimeByClock_{0};
 
     sound_sys::YM2151 ym2151_;
-    sound_sys::M6258 m6258_;
+    sound_sys::SWPCM8 pcm8_;
 
 public:
     bool loadMDX(const char* filename);

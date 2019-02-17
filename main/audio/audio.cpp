@@ -8,6 +8,7 @@
 #include "../target.h"
 #include "audio_out.h"
 #include "audio_stream.h"
+#include "sample_generator.h"
 #include "sampling_rate_converter.h"
 #include "util/ring_buffer.h"
 #include "ym_sample_decoder.h"
@@ -48,8 +49,7 @@ class InternalSpeakerOut : public AudioOutDriver
 {
     static constexpr i2s_port_t port_ = I2S_NUM_0;
 
-    //    float volume_ = 1.0f;
-    float volume_ = 0.5f;
+    float volume_ = 1.0f;
 
 public:
     InternalSpeakerOut()
@@ -188,6 +188,8 @@ public:
         return r;
     }
 
+    void setVolume(float v) { src_.setScale(v); }
+
     static FMOutputHandler& instance()
     {
         static FMOutputHandler inst;
@@ -255,6 +257,9 @@ public:
 
         auto& fm = FMOutputHandler::instance();
         fm.accum(data, nSamples, sampleRate);
+
+        getSampleGeneratorManager().setSampleRate(sampleRate);
+        getSampleGeneratorManager().accumSamples(data, nSamples);
     }
 };
 
@@ -274,6 +279,12 @@ setFMClock(uint32_t freq, int sampleRateDiv)
     FMOutputHandler::instance().setSampleRate(sampleRate);
 
     target::startFMClock(freq);
+}
+
+void
+setFMVolume(float v)
+{
+    FMOutputHandler::instance().setVolume(v);
 }
 
 void
