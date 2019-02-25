@@ -15,10 +15,11 @@ namespace ui
 
 class ScrollList : public Widget, public WidgetList
 {
-    bool vertical_     = true;
-    int displayOffset_ = 0;
-    int selectIndex_   = 0;
-    bool needRefresh_  = true;
+    bool vertical_             = true;
+    int displayOffset_         = 0;
+    int selectIndex_           = 0;
+    bool needRefresh_          = true;
+    bool needRefreshScrollBar_ = true;
 
     using Func = std::function<void(int)>;
 

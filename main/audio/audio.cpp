@@ -51,19 +51,24 @@ class InternalSpeakerOut : public AudioOutDriver
 
     float volume_ = 1.0f;
 
+    int residual_   = 0;
+    int prevSample_ = 0;
+
+    static constexpr int overSampleShift_ = 2;
+
 public:
     InternalSpeakerOut()
     {
         i2s_config_t cfg{};
         cfg.mode =
             (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN);
-        cfg.sample_rate          = getSampleRate();
+        cfg.sample_rate          = getSampleRate() << overSampleShift_;
         cfg.bits_per_sample      = I2S_BITS_PER_SAMPLE_16BIT;
         cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
         cfg.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S_MSB);
         cfg.intr_alloc_flags     = 0;
-        cfg.dma_buf_count        = 4;
-        cfg.dma_buf_len          = 128;
+        cfg.dma_buf_count        = 2;
+        cfg.dma_buf_len          = 128 << overSampleShift_;
         cfg.use_apll             = false;
 
         auto r = i2s_driver_install(port_, &cfg, 0, nullptr);
@@ -107,18 +112,78 @@ public:
         int bias = int(volume_ * baseScale * 32768);
         // 0.5Vccを中心にせず、0-Volume で振る (ノイズ対策)
 
+        auto ns         = n >> overSampleShift_;
         const auto* src = data;
-        auto* dst       = outSampleBuffer;
-
-        for (auto ct = n; ct; --ct)
+        for (auto osct = 1 << overSampleShift_; osct; --osct)
         {
-            int v  = ((((*src)[0] + (*src)[1]) * scale) >> 16) + bias;
-            dst[0] = v;
-            dst[1] = v;
-            src += 1;
-            dst += 2;
+            auto* dst = outSampleBuffer;
+
+            for (auto ct = ns; ct; --ct)
+            {
+                int v = ((((*src)[0] + (*src)[1]) * scale) >> 16) + bias;
+
+                if (overSampleShift_ == 0)
+                {
+                    v += residual_;
+                    int vq    = v & 0xff00;
+                    residual_ = v - vq;
+
+                    dst[0] = vq;
+                    dst[1] = vq;
+                    src += 1;
+                    dst += 2;
+                }
+                if (overSampleShift_ == 1)
+                {
+                    int v0    = ((prevSample_ + v) >> 1) + residual_;
+                    int vq    = v0 & 0xff00;
+                    residual_ = v0 - vq;
+                    dst[0]    = vq;
+                    dst[1]    = vq;
+
+                    int v1    = v + residual_;
+                    vq        = v1 & 0xff00;
+                    residual_ = v1 - vq;
+                    dst[2]    = vq;
+                    dst[3]    = vq;
+
+                    src += 1;
+                    dst += 4;
+                    prevSample_ = v;
+                }
+                if (overSampleShift_ == 2)
+                {
+                    int v0    = ((prevSample_ * 3 + v) >> 2) + residual_;
+                    int vq    = v0 & 0xff00;
+                    residual_ = v0 - vq;
+                    dst[0]    = vq;
+                    dst[1]    = vq;
+
+                    int v1    = ((prevSample_ + v) >> 1) + residual_;
+                    vq        = v1 & 0xff00;
+                    residual_ = v1 - vq;
+                    dst[2]    = vq;
+                    dst[3]    = vq;
+
+                    int v2    = ((prevSample_ + v * 3) >> 2) + residual_;
+                    vq        = v2 & 0xff00;
+                    residual_ = v2 - vq;
+                    dst[4]    = vq;
+                    dst[5]    = vq;
+
+                    int v3    = v + residual_;
+                    vq        = v3 & 0xff00;
+                    residual_ = v3 - vq;
+                    dst[6]    = vq;
+                    dst[7]    = vq;
+
+                    src += 1;
+                    dst += 8;
+                    prevSample_ = v;
+                }
+            }
+            write(outSampleBuffer, n);
         }
-        write(outSampleBuffer, n);
     }
 
     static InternalSpeakerOut& instance()

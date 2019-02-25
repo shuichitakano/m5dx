@@ -33,16 +33,34 @@ ScrollList::setIndex(int i)
         selectIndex_ = i;
         touchSelectWidget();
     }
+    needRefreshScrollBar_ = true;
 }
 
 void
 ScrollList::listInserted(int i)
 {
+    int step = getBaseItemSize();
     if (i <= selectIndex_ && i < getWidgetCount())
     {
         ++selectIndex_;
-        displayOffset_ -= getBaseItemSize();
+        displayOffset_ -= step;
     }
+
+    if (step)
+    {
+        auto ofs        = step * i + displayOffset_;
+        auto regionSize = vertical_ ? getSize().h : getSize().w;
+        if (ofs > -step && ofs < regionSize)
+        {
+            refresh();
+        }
+    }
+    else
+    {
+        refresh();
+    }
+
+    needRefreshScrollBar_ = true;
 }
 
 void
@@ -182,7 +200,7 @@ ScrollList::onRender(RenderContext& ctx)
         // todo: アイテムごとの大きさが違う場合
     }
 
-    if (needRefresh_)
+    if (needRefresh_ || needRefreshScrollBar_)
     {
         ctx.applyClipRegion();
 
@@ -201,6 +219,8 @@ ScrollList::onRender(RenderContext& ctx)
 
         // スクロールバー
         drawVScrollBar(ctx, wsize, -displayOffset_, wsize.h, step * n);
+
+        needRefreshScrollBar_ = false;
     }
 
     needRefresh_ = false;

@@ -19,7 +19,7 @@ class FMChip : public SoundChipBase
 public:
     void setValue(int addr, int v) override
     {
-#if 1
+#if 0
         target::setupBus();
 
         target::setFMA0(addr);
