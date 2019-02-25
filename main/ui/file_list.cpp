@@ -5,8 +5,10 @@
 
 #include "file_list.h"
 #include "context.h"
-#include <SD.h>
+#include <algorithm>
 #include <debug.h>
+#include <dirent.h>
+#include <io/file_util.h>
 #include <music_player/music_player_manager.h>
 #include <mutex>
 #include <sys/job_manager.h>
@@ -167,54 +169,11 @@ FileList::setPath(const std::string& path)
         directories_.emplace_back("..");
         isRootDir_ = false;
     }
-
+#if 0
     sys::getDefaultJobManager().add([this] { loadFileList(); });
-}
-
-void
-FileList::loadFileList()
-{
-    DBOUT(("open path = %s\n", path_.c_str()));
-    auto root = SD.open(path_.c_str());
-    if (!root || !root.isDirectory())
-    {
-        DBOUT(("open file list error: %s.\n", path_.c_str()));
-        return;
-    }
-
-    while (auto file = root.openNextFile())
-    {
-        if (abortReq_)
-        {
-            break;
-        }
-
-        auto name = strrchr(file.name(), '/');
-        if (name)
-        {
-            ++name;
-        }
-
-        if (!name || name[0] == '.')
-        {
-            continue;
-        }
-
-        if (file.isDirectory())
-        {
-            appendDirectory(name);
-            refresh();
-        }
-        else
-        {
-            if (auto p = music_player::findMusicPlayerFromFile(name))
-            {
-                std::lock_guard<sys::Mutex> lock(getMutex());
-                appendFile(name, file.size(), p->getFormat());
-                refresh();
-            }
-        }
-    }
+#else
+    loadFileListDirect();
+#endif
 }
 
 namespace
@@ -228,6 +187,10 @@ struct NameLess
         return strcasecmp(a.c_str(), b.c_str()) < 0;
     }
 
+    bool operator()(const FileList::Directory& a, const FileList::Directory& b)
+    {
+        return cmp(a.name_, b.name_);
+    }
     bool operator()(const FileList::Directory& a, const std::string& b)
     {
         return cmp(a.name_, b);
@@ -237,6 +200,10 @@ struct NameLess
         return cmp(a, b.name_);
     }
 
+    bool operator()(const FileList::File& a, const FileList::File& b)
+    {
+        return cmp(a.filename_, b.filename_);
+    }
     bool operator()(const FileList::File& a, const std::string& b)
     {
         return cmp(a.filename_, b);
@@ -248,6 +215,109 @@ struct NameLess
 };
 
 } // namespace
+
+void
+FileList::loadFileListDirect()
+{
+    DBOUT(("open path = %s\n", path_.c_str()));
+    auto dir = opendir(path_.c_str());
+    if (!dir)
+    {
+        DBOUT(("open file list error: %s.\n", path_.c_str()));
+        return;
+    }
+
+    while (auto e = readdir(dir))
+    {
+        auto name = e->d_name;
+
+        if (!name || name[0] == '.')
+        {
+            continue;
+        }
+
+        if (e->d_type & DT_DIR)
+        {
+            directories_.emplace_back(name);
+        }
+        else
+        {
+            if (auto p = music_player::findMusicPlayerFromFile(name))
+            {
+                files_.emplace_back(name, -1, p->getFormat());
+            }
+        }
+    }
+
+    {
+        auto p = directories_.begin();
+        if (isRootDir_)
+        {
+            ++p;
+        }
+        std::sort(p, directories_.end(), NameLess());
+    }
+    std::sort(files_.begin(), files_.end(), NameLess());
+
+    [&] {
+        for (auto p = directories_.begin(); p != directories_.end(); ++p)
+        {
+            if (p->name_ == followFile_)
+            {
+                setIndex(p - directories_.begin());
+                return;
+            }
+        }
+        for (auto p = files_.begin(); p != files_.end(); ++p)
+        {
+            if (p->filename_ == followFile_)
+            {
+                setIndex((p - files_.begin()) + directories_.size());
+                return;
+            }
+        }
+    }();
+    followFile_.clear();
+}
+
+void
+FileList::loadFileList()
+{
+    DBOUT(("open path = %s\n", path_.c_str()));
+    auto dir = opendir(path_.c_str());
+    if (!dir)
+    {
+        DBOUT(("open file list error: %s.\n", path_.c_str()));
+        return;
+    }
+
+    while (auto e = readdir(dir))
+    {
+        if (abortReq_)
+        {
+            break;
+        }
+
+        auto name = e->d_name;
+
+        if (!name || name[0] == '.')
+        {
+            continue;
+        }
+
+        if (e->d_type & DT_DIR)
+        {
+            appendDirectory(name);
+        }
+        else
+        {
+            if (auto p = music_player::findMusicPlayerFromFile(name))
+            {
+                appendFile(name, -1, p->getFormat());
+            }
+        }
+    }
+}
 
 void
 FileList::appendDirectory(std::string&& name)
@@ -311,6 +381,7 @@ FileList::onUpdate(UpdateContext& ctx)
                 if (auto r = p->loadTitle(fn.c_str()))
                 {
                     f.title_ = r.value();
+                    f.size_  = io::getFileSize(fn.c_str());
                     f.touch();
                 }
             }
@@ -421,10 +492,13 @@ FileList::File::_render(RenderContext& ctx)
     ctx.setFontColor(fileNameColor);
     ctx.putText(filename_.c_str(), fileNamePos, fileNameSize, TextAlignH::LEFT);
 
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%zd bytes", size_);
-    ctx.setFontColor(fileSizeColor);
-    ctx.putText(buf, fileSizePos, fileSizeSize, TextAlignH::RIGHT);
+    if (size_ >= 0)
+    {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%zd bytes", size_);
+        ctx.setFontColor(fileSizeColor);
+        ctx.putText(buf, fileSizePos, fileSizeSize, TextAlignH::RIGHT);
+    }
 }
 ////
 void

@@ -12,6 +12,8 @@
 #include <utility/Config.h>
 #include <utility>
 
+#include <dirent.h>
+
 #include "application.h"
 
 #include <sys/timer.h>
@@ -82,7 +84,7 @@ setup()
     //    waveViewBuffer_.initialize(128, 64, 16);
     waveViewBuffer_.initialize(128, 128, 16);
 
-    if (!SD.begin(TFCARD_CS_PIN, SPI, 40000000))
+    if (!SD.begin(TFCARD_CS_PIN, SPI, 40000000, ""))
     {
         Serial.println("Card Mount Failed");
     }
@@ -121,39 +123,6 @@ setup()
     //
 
     M5DX::initialize();
-
-    uint8_t cardType = SD.cardType();
-
-    if (cardType == CARD_NONE)
-    {
-        Serial.println("No SD card attached");
-        return;
-    }
-
-    Serial.print("SD Card Type: ");
-    if (cardType == CARD_MMC)
-    {
-        Serial.println("MMC");
-    }
-    else if (cardType == CARD_SD)
-    {
-        Serial.println("SDSC");
-    }
-    else if (cardType == CARD_SDHC)
-    {
-        Serial.println("SDHC");
-    }
-    else
-    {
-        Serial.println("UNKNOWN");
-    }
-
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
-    //    listDir(SD, "/", 0);
-    Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-    Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 
     ///
 
@@ -231,6 +200,7 @@ loop()
     graphics::getDisplay().blit(waveViewBuffer_, 320 - 128, 240 - 128);
 #endif
 
+#if 0
     static int pixelNumber = 0; // = random(0, M5STACK_FIRE_NEO_NUM_LEDS - 1);
     pixelNumber++;
     if (pixelNumber > 9)
@@ -241,6 +211,7 @@ loop()
 
     pixels.setPixelColor(pixelNumber, pixels.Color(r, g, b));
     pixels.show();
+#endif
 
     delay(1);
 }

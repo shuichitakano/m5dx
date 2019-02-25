@@ -38,11 +38,11 @@ public:
     {
         std::string filename_;
         std::string title_;
-        size_t size_ = 0;
+        ssize_t size_ = 0;
         music_player::FileFormat format_{};
 
     public:
-        File(std::string&& filename, size_t size, music_player::FileFormat fmt)
+        File(std::string&& filename, ssize_t size, music_player::FileFormat fmt)
             : filename_(std::move(filename))
             , size_(size)
             , format_(fmt)
@@ -102,6 +102,7 @@ public:
 protected:
     Widget* _getWidget(size_t i);
     void loadFileList();
+    void loadFileListDirect();
 
     void selectChanged() override { followFile_.clear(); }
 
