@@ -5,6 +5,7 @@
 
 #include "application.h"
 
+#include "debug.h"
 #include "target.h"
 #include <graphics/display.h>
 #include <graphics/font_data.h>
@@ -14,6 +15,7 @@
 #include <ui/context.h>
 #include <ui/key.h>
 #include <ui/ui_manager.h>
+#include <wire.h>
 
 #include <ui/file_window.h>
 
@@ -50,9 +52,23 @@ public:
     void tick()
     {
         {
-            keyState_.updateNegative(target::getButtonA(),
-                                     target::getButtonB(),
-                                     target::getButtonC());
+            int dial     = 0;
+            bool trigger = false;
+
+            target::startI2C();
+            Wire.requestFrom(0x62, 2);
+            while (Wire.available())
+            {
+                dial += (int8_t)Wire.read();
+                trigger |= Wire.read() != 255;
+            }
+            target::endI2C();
+
+            keyState_.update(!target::getButtonA(),
+                             !target::getButtonB(),
+                             !target::getButtonC(),
+                             trigger,
+                             dial);
 
             ui::UpdateContext ctx(&keyState_);
             uiManager_.update(ctx);

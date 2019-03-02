@@ -43,6 +43,7 @@ void restoreBus();
 void startFMClock(uint32_t freq);
 
 void writeBusData(int d);
+void setBusIdle();
 
 void negateFMCS();
 void assertFMCS();
@@ -52,6 +53,12 @@ void setFMA0(int i);
 bool getButtonA();
 bool getButtonB();
 bool getButtonC();
+
+void lockBus();
+void unlockBus();
+
+void startI2C();
+void endI2C();
 
 } // namespace target
 

@@ -17,6 +17,9 @@ class KeyState
     uint32_t edge_    = 0;
     // 正論理
 
+    int dial_    = 0;
+    int dialMod_ = 0;
+
     uint32_t startTimeUS_     = 0;
     uint32_t currentTimeUS_   = 0;
     uint32_t lastPulseTimeUS_ = 0;
@@ -27,8 +30,7 @@ class KeyState
     bool pressMask_     = true;
 
 public:
-    void update(bool b0, bool b1, bool b2);
-    void updateNegative(bool b0, bool b1, bool b2) { update(!b0, !b1, !b2); }
+    void update(bool b0, bool b1, bool b2, bool b3, int dial);
 
     bool isPressed(int i) const { return current_ & (1 << i); }
     bool isEdge(int i) const { return edge_ & (1 << i); }
@@ -47,6 +49,8 @@ public:
 
     // repeat付き
     bool isTrigger(int i) const;
+
+    int getDial() const { return dial_; }
 };
 
 } // namespace ui

@@ -26,6 +26,7 @@ ScrollList::touchSelectWidget()
 void
 ScrollList::setIndex(int i)
 {
+    DBOUT(("setIndex(%d)\n", i));
     std::lock_guard<sys::Mutex> lock(getMutex());
     if (i >= 0 && i < getWidgetCount())
     {
@@ -80,7 +81,9 @@ ScrollList::onUpdate(UpdateContext& ctx)
     {
         ctx.disableInput();
 
-        if (key->isTrigger(0))
+        int dial = key->getDial();
+
+        if (key->isTrigger(0) || dial > 0)
         {
             std::lock_guard<sys::Mutex> lock(getMutex());
             selectChanged();
@@ -88,7 +91,8 @@ ScrollList::onUpdate(UpdateContext& ctx)
             if (n)
             {
                 touchSelectWidget();
-                --selectIndex_;
+                int d = dial ? dial : 1;
+                selectIndex_ -= d;
                 if (selectIndex_ < 0)
                 {
                     selectIndex_ = n - 1;
@@ -96,7 +100,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
                 touchSelectWidget();
             }
         }
-        else if (key->isTrigger(2))
+        else if (key->isTrigger(2) || dial < 0)
         {
             std::lock_guard<sys::Mutex> lock(getMutex());
             selectChanged();
@@ -104,7 +108,8 @@ ScrollList::onUpdate(UpdateContext& ctx)
             if (n)
             {
                 touchSelectWidget();
-                ++selectIndex_;
+                int d = dial ? -dial : 1;
+                selectIndex_ += d;
                 if (selectIndex_ >= n)
                 {
                     selectIndex_ = 0;
@@ -112,7 +117,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
                 touchSelectWidget();
             }
         }
-        else if (key->isLongPressEdge(1))
+        else if (key->isLongPressEdge(1) || key->isLongPressEdge(3))
         {
             if (longPressFunc_)
             {
@@ -121,7 +126,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
                 longPressFunc_(selectIndex_);
             }
         }
-        else if (key->isReleaseEdge(1))
+        else if (key->isReleaseEdge(1) || key->isReleaseEdge(3))
         {
             if (decideFunc_)
             {
