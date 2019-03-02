@@ -20,8 +20,8 @@ FileWindow::FileWindow(const std::string& path)
 
     list_.setLongPressFunc([this](int) {
         auto pathSet = list_.getSeparatePath();
-        setPath(pathSet.first);
         list_.setFollowFile(pathSet.second);
+        setPath(pathSet.first);
     });
 
     list_.setDecideFunc([this](int i) {
@@ -81,8 +81,8 @@ FileWindow::setPath(const std::string& path)
         }
     }
 
-    list_.setPath(path);
     list_.reset();
+    list_.setPath(path);
     refresh();
 }
 

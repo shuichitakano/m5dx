@@ -25,9 +25,8 @@ initGPIO()
         cnf.mode         = GPIO_MODE_OUTPUT;
         cnf.pin_bit_mask = ( //
             (_1 << config::D0) | (_1 << config::D1) | (_1 << config::D2) |
-            (_1 << config::D3) | (_1 << config::D4) | (_1 << config::D5) |
-            (_1 << config::D6) | (_1 << config::D7) | (_1 << config::CS) |
-            (_1 << config::A0) | 0);
+            (_1 << config::D3) | (_1 << config::D4) | (_1 << config::D7) |
+            (_1 << config::CS) | (_1 << config::A0) | 0);
         cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         cnf.pull_up_en   = GPIO_PULLUP_DISABLE;
         cnf.intr_type    = GPIO_INTR_DISABLE;
@@ -36,6 +35,17 @@ initGPIO()
         assert(r == ESP_OK);
     }
     negateFMCS();
+    {
+        gpio_config_t cnf{};
+        cnf.mode         = GPIO_MODE_OUTPUT_OD;
+        cnf.pin_bit_mask = (_1 << config::D5) | (_1 << config::D6);
+        cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        cnf.pull_up_en   = GPIO_PULLUP_ENABLE;
+        cnf.intr_type    = GPIO_INTR_DISABLE;
+
+        auto r = gpio_config(&cnf);
+        assert(r == ESP_OK);
+    }
 
     {
         gpio_config_t cnf{};
@@ -53,25 +63,28 @@ initGPIO()
 }
 
 void
-setupBus()
+lockBus()
 {
     spiSimpleTransaction(SPI.bus());
+}
 
-#if 1
+void
+unlockBus()
+{
+    spiEndTransaction(SPI.bus());
+}
+
+void
+setupBus()
+{
+    lockBus();
+
     gpio_matrix_out(config::D7, SIG_GPIO_OUT_IDX, false, false);
     gpio_matrix_out(config::D2, SIG_GPIO_OUT_IDX, false, false);
     gpio_matrix_out(config::D0, SIG_GPIO_OUT_IDX, false, false);
 
     pinMode(config::D3, OUTPUT);
     gpio_matrix_out(config::D3, SIG_GPIO_OUT_IDX, false, false);
-#else
-    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[config::D7], PIN_FUNC_GPIO);
-    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[config::D2], PIN_FUNC_GPIO);
-    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[config::D0], PIN_FUNC_GPIO);
-    GPIO.enable_w1ts = (0x1 << config::D3);
-    gpio_matrix_out(config::D3, SIG_GPIO_OUT_IDX, false, false);
-    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[config::D3], PIN_FUNC_GPIO);
-#endif
 }
 
 void
@@ -84,7 +97,33 @@ restoreBus()
     pinMode(config::D3, INPUT);
     gpio_matrix_in(config::D3, VSPIQ_OUT_IDX, false);
 
-    spiEndTransaction(SPI.bus());
+    unlockBus();
+}
+
+void
+startI2C()
+{
+    lockBus();
+
+    pinMode(config::D6, OPEN_DRAIN | PULLUP | INPUT | OUTPUT); // scl
+    pinMode(config::D5, OPEN_DRAIN | PULLUP | INPUT | OUTPUT); // sda
+    gpio_matrix_out(config::D6, I2CEXT0_SCL_OUT_IDX, false, false);
+    gpio_matrix_in(config::D6, I2CEXT0_SCL_OUT_IDX, false);
+    gpio_matrix_out(config::D5, I2CEXT0_SDA_OUT_IDX, false, false);
+    gpio_matrix_in(config::D5, I2CEXT0_SDA_OUT_IDX, false);
+}
+
+void
+endI2C()
+{
+    pinMode(config::D6, OPEN_DRAIN | PULLUP | OUTPUT);
+    pinMode(config::D5, OPEN_DRAIN | PULLUP | OUTPUT);
+    gpio_matrix_out(config::D6, SIG_GPIO_OUT_IDX, false, false);
+    gpio_matrix_out(config::D5, SIG_GPIO_OUT_IDX, false, false);
+
+    setBusIdle();
+
+    unlockBus();
 }
 
 void
@@ -101,6 +140,16 @@ writeBusData(int d)
 
     GPIO.out_w1ts = (s0 << 1) | (s1 << 16);
     GPIO.out_w1tc = (c0 << 1) | (c1 << 16);
+}
+
+void
+setBusIdle()
+{
+    // SCL, SDAのビットを1にしておく
+    // - Start Condition になったら即 Stop Conditionに戻す
+    // - Open Drain による立ち上がりの遅さを防ぐ
+
+    GPIO.out_w1ts = (1 << 21) | (1 << 22);
 }
 
 void

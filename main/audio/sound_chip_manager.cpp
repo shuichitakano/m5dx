@@ -19,11 +19,11 @@ class FMChip : public SoundChipBase
 public:
     void setValue(int addr, int v) override
     {
-#if 0
+#if 1
         target::setupBus();
 
-        target::setFMA0(addr);
         target::writeBusData(v);
+        target::setFMA0(addr);
 
         target::assertFMCS();
 
@@ -32,7 +32,9 @@ public:
         target::negateFMCS();
 
         // 3.579545MHz 68clock = 19us
-        delayMicroseconds(19);
+        delayMicroseconds(10);
+        target::setBusIdle();
+        delayMicroseconds(9);
 
         target::restoreBus();
 #endif

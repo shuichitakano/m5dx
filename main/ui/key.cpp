@@ -19,10 +19,16 @@ constexpr int longPressTime_  = 1000000;
 } // namespace
 
 void
-KeyState::update(bool b0, bool b1, bool b2)
+KeyState::update(bool b0, bool b1, bool b2, bool b3, int dial)
 {
+    dial += dialMod_;
+    auto d_4 = dial / 4;
+    dialMod_ = dial - d_4 * 4;
+    dial_    = d_4;
+
     prev_    = current_;
-    current_ = ((b0 ? 1 << 0 : 0) | (b1 ? 1 << 1 : 0) | (b2 ? 1 << 2 : 0) | 0);
+    current_ = ((b0 ? 1 << 0 : 0) | (b1 ? 1 << 1 : 0) | (b2 ? 1 << 2 : 0) |
+                (b3 ? 1 << 3 : 0) | 0);
     if (current_)
     {
         if (!pressMask_)
