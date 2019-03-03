@@ -203,10 +203,10 @@ RenderContext::drawRect(Vec2 pos, const Dim2& size, uint32_t color)
 }
 
 void
-RenderContext::blit(Vec2 pos, const graphics::FrameBufferBase& fb)
+RenderContext::put(Vec2 pos, const graphics::FrameBufferBase& fb)
 {
     pos += getCurrentPosition();
-    getFrameBuffer()->blit(fb, pos.x, pos.y);
+    getFrameBuffer()->transfer(fb, pos.x, pos.y);
 }
 
 } // namespace ui

@@ -275,7 +275,7 @@ loop()
     }
 
     graphics::getDisplay().setWindow(0, 0, 320, 240);
-    graphics::getDisplay().blit(waveViewBuffer_, 320 - 128, 240 - 128);
+    graphics::getDisplay().transfer(waveViewBuffer_, 320 - 128, 240 - 128);
 #endif
 
 #if 0

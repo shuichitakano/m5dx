@@ -92,11 +92,33 @@ Display::getPixel(uint32_t x, uint32_t y) const
 }
 
 void
-Display::blit(const FrameBufferBase& fb, int x, int y)
+Display::drawBits16(
+    int x, int y, int w, int h, int pitchInBytes, const void* img16)
 {
-    if (!fb._blitToLCD((InternalLCD*)_getLCD(), x, y, wx_, wy_, ww_, wh_))
+    int sx = 0;
+    int sy = 0;
+    adjustTransferRegion(x, y, sx, sy, w, h);
+    if (!w || !h)
     {
-        FrameBufferBase::blit(fb, x, y);
+        return;
+    }
+
+    auto p = (uint8_t*)img16;
+    p += sx << 1;
+    p += sy * pitchInBytes;
+
+    if (pitchInBytes == w << 1)
+    {
+        _getLCD()->pushImage(x, y, w, h, (uint16_t*)p);
+    }
+    else
+    {
+        for (; h; --h)
+        {
+            _getLCD()->pushImage(x, y, w, 1, (uint16_t*)p);
+            ++y;
+            p += pitchInBytes;
+        }
     }
 }
 

@@ -17,6 +17,7 @@
 #include <ui/ui_manager.h>
 #include <wire.h>
 
+#include <ui/control_bar.h>
 #include <ui/file_window.h>
 
 namespace M5DX
@@ -46,6 +47,7 @@ public:
         fontKanji_.setData(fontKanjiBin.data());
 
         //
+        uiManager_.append(std::make_shared<ui::ControlBar>(), {0, 232});
         uiManager_.append(std::make_shared<ui::FileWindow>("/"));
     }
 
