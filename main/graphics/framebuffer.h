@@ -40,26 +40,13 @@ public:
     void setPixel(uint32_t x, uint32_t y, uint32_t c) override;
     uint32_t getPixel(uint32_t x, uint32_t y) const override;
 
-    void blit(const FrameBufferBase& fb, int x, int y) override;
-
-protected:
-    bool _blitToLCD(InternalLCD*,
+    void transferTo(FrameBufferBase& dst,
                     int dx,
                     int dy,
-                    int wx,
-                    int wy,
-                    int ww,
-                    int wh) const override;
-
-    void pushImage(TFT_eSPI* ilcd,
-                   int dx,
-                   int dy,
-                   int w,
-                   int h,
-                   void* p,
-                   size_t stride,
-                   int wx,
-                   int wy) const;
+                    int sx,
+                    int sy,
+                    int w,
+                    int h) const override;
 
 private:
     using Img = TFT_eSprite;
@@ -70,8 +57,10 @@ private:
     uint32_t ww_ = 0;
     uint32_t wh_ = 0;
 
-    int bpp_                     = 0;
     void* buffer_                = nullptr;
+    uint32_t bw_                 = 0;
+    uint32_t bh_                 = 0;
+    int bpp_                     = 0;
     uint32_t unitTransferPixels_ = 1280; // 40Mで2500pixelが1ms
 };
 

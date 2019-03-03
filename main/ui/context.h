@@ -181,7 +181,7 @@ public:
     void fill(Vec2 pos, const Dim2& size, uint32_t color);
     void drawRect(Vec2 pos, const Dim2& size, uint32_t color);
 
-    void blit(Vec2 pos, const graphics::FrameBufferBase& fb);
+    void put(Vec2 pos, const graphics::FrameBufferBase& fb);
 
 protected:
     struct FBRestoreState

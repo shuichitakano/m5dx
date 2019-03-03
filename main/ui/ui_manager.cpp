@@ -25,20 +25,24 @@ void
 UIManager::checkRenderStartLV()
 {
     auto n = layer_.size();
-    for (size_t i = 0; i < n; ++i)
+    if (!n)
+    {
+        renderStartLV_ = 0;
+        return;
+    }
+    for (size_t i = n - 1; i > 1; ++i)
     {
         auto& l = layer_[i];
         BBox bb(l.pos_, l.widget_->getSize());
-        if (bb.p[0].x > 0 || bb.p[0].y > 0 ||
-            bb.p[1].x < WindowSettings::SCREEN_WIDTH ||
-            bb.p[1].y < WindowSettings::SCREEN_HEIGHT)
+        if (bb.p[0].x <= 0 && bb.p[0].y <= 0 &&
+            bb.p[1].x >= WindowSettings::SCREEN_WIDTH &&
+            bb.p[1].y >= WindowSettings::SCREEN_HEIGHT)
         {
-            renderStartLV_ = i - 1;
+            renderStartLV_ = i;
             return;
         }
     }
-    renderStartLV_ = n ? n - 1 : 0;
-    DBOUT(("render start lv = %d\n", renderStartLV_));
+    renderStartLV_ = 0;
 }
 
 void

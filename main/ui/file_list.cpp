@@ -18,7 +18,7 @@ namespace ui
 
 namespace
 {
-constexpr Dim2 widgetSize_ = {320, 240 - WindowSettings::TITLE_BAR_HEIGHT};
+constexpr Dim2 widgetSize_ = {320, 232 - WindowSettings::TITLE_BAR_HEIGHT};
 constexpr Dim2 listSize_   = {320 - WindowSettings::SCROLL_BAR_WIDTH, 24};
 } // namespace
 
@@ -415,7 +415,7 @@ FileList::Item::onRender(RenderContext& ctx)
 {
     if (updated_ || ctx.isInvalidated(listSize_))
     {
-        auto& tmpFB = ctx.getTemporaryFrameBuffer(listSize_, 8);
+        auto& tmpFB = ctx.getTemporaryFrameBuffer(listSize_);
         {
             auto recoverFB = ctx.updateFrameBuffer(&tmpFB);
 
@@ -428,11 +428,10 @@ FileList::Item::onRender(RenderContext& ctx)
             tmpFB.fill(col);
 
             _render(ctx);
-            ctx.applyClipRegion();
         }
 
         ctx.applyClipRegion();
-        ctx.blit({0, 0}, tmpFB);
+        ctx.put({0, 0}, tmpFB);
 
         updated_ = false;
         return;

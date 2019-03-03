@@ -33,7 +33,12 @@ public:
     void setPixel(uint32_t x, uint32_t y, uint32_t c) override;
     uint32_t getPixel(uint32_t x, uint32_t y) const override;
 
-    void blit(const FrameBufferBase& fb, int x, int y) override;
+    void drawBits16(int x,
+                    int y,
+                    int w,
+                    int h,
+                    int pitchInBytes,
+                    const void* img16) override;
 
 public:
     TFT_eSPI* _getLCD() { return &display_; }

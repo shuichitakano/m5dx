@@ -32,7 +32,23 @@ public:
 
     virtual void fill(int x, int y, int w, int h, uint32_t c);
     virtual void fill(uint32_t c);
-    virtual void blit(const FrameBufferBase& fb, int x, int y);
+    virtual void
+    drawBits16(int x, int y, int w, int h, int pitchInBytes, const void* img16);
+    virtual void transferTo(FrameBufferBase& dst,
+                            int dx,
+                            int dy,
+                            int sx,
+                            int sy,
+                            int w,
+                            int h) const;
+
+    void transfer(const FrameBufferBase& src,
+                  int dx,
+                  int dy,
+                  int sx = 0,
+                  int sy = 0,
+                  int w  = 0,
+                  int h  = 0);
 
     void
     drawBits(int x, int y, int w, int h, const uint8_t* bits, uint32_t color);
@@ -64,14 +80,10 @@ protected:
                                int y,
                                int w);
 
-    struct InternalLCD;
+    void adjustTransferRegion(
+        int& dx, int& dy, int& sx, int& sy, int& w, int& h) const;
 
-public:
-    virtual bool _blitToLCD(
-        InternalLCD*, int dx, int dy, int wx, int wy, int ww, int wh) const
-    {
-        return false;
-    }
+    struct InternalLCD;
 };
 
 inline uint32_t

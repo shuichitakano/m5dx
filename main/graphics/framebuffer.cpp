@@ -6,6 +6,7 @@
 #include "framebuffer.h"
 #include "display.h"
 #include <algorithm>
+#include <debug.h>
 
 namespace graphics
 {
@@ -28,6 +29,8 @@ FrameBuffer::initialize(uint32_t w, uint32_t h, int bpp)
     img_.setColorDepth(bpp);
     buffer_ = img_.createSprite(w, h);
     bpp_    = bpp;
+    bw_     = w;
+    bh_     = h;
     setWindow(0, 0, w, h);
 }
 
@@ -75,13 +78,13 @@ FrameBuffer::getHeight() const
 uint32_t
 FrameBuffer::getBufferWidth() const
 {
-    return const_cast<Img*>(&img_)->width();
+    return bw_;
 }
 
 uint32_t
 FrameBuffer::getBufferHeight() const
 {
-    return const_cast<Img*>(&img_)->height();
+    return bh_;
 }
 
 uint32_t
@@ -130,112 +133,27 @@ FrameBuffer::getPixel(uint32_t x, uint32_t y) const
 }
 
 void
-FrameBuffer::blit(const FrameBufferBase& fb, int x, int y)
+FrameBuffer::transferTo(
+    FrameBufferBase& dst, int dx, int dy, int sx, int sy, int w, int h) const
 {
-    // todo
-}
-
-void
-FrameBuffer::pushImage(TFT_eSPI* lcd,
-                       int dx,
-                       int dy,
-                       int w,
-                       int h,
-                       void* p,
-                       size_t stride,
-                       int wx,
-                       int wy) const
-{
-    auto draw = [&](int x, int y, int w, int h, uint8_t* p) {
-        if (bpp_ == 16)
-        {
-            lcd->pushImage(x, y, w, h, (uint16_t*)p);
-        }
-        else
-        {
-            lcd->pushImage(x, y, w, h, p, bpp_ == 8);
-        }
-    };
-
-    auto pp = (uint8_t*)p;
-
-    if (dy < wy)
+    if (bpp_ != 16)
     {
-        int d = wy - dy;
-        h -= d;
-        if (h <= 0)
-        {
-            return;
-        }
-        dy = wy;
-        pp += stride * d;
+        FrameBufferBase::transferTo(dst, dx, dy, sx, sy, w, h);
+        return;
     }
 
-    if (dx < wx)
+    if (w == 0)
     {
-        int d = wx - dx;
-        if (bpp_ == 1)
-        {
-            d &= ~7;
-        }
-        w -= d;
-        if (w <= 0)
-        {
-            return;
-        }
-        dx = wx;
-        pp += (bpp_ * d) >> 3;
-
-        for (; h; --h)
-        {
-            draw(dx, dy, w, 1, pp);
-            pp += stride;
-        }
+        w = getBufferWidth();
     }
-    else
+    if (h == 0)
     {
-        draw(dx, dy, w, h, pp);
-    }
-}
-
-bool
-FrameBuffer::_blitToLCD(
-    InternalLCD* ilcd, int x, int y, int wx, int wy, int ww, int wh) const
-{
-    //    const_cast<Img *>(&img_)->pushSprite(x, y, false);
-    auto* lcd     = (TFT_eSPI*)ilcd;
-    auto w        = getWidth();
-    auto h        = getHeight();
-    auto y1       = y + h;
-    auto unitLine = unitTransferPixels_ / w;
-    auto p        = (uint8_t*)buffer_;
-
-    size_t stride       = (w * bpp_ + 7) >> 3;
-    size_t unitLineSize = stride * unitLine;
-
-    while (y < y1)
-    {
-        auto yn = std::min<int>(y1, y + unitLine);
-        auto ch = yn - y;
-
-#if 0
-        if (bpp_ == 16)
-        {
-            lcd->pushImage(x, y, w, ch, (uint16_t*)p);
-        }
-        else
-        {
-            lcd->pushImage(x, y, w, ch, p, bpp_ == 8);
-        }
-#else
-        pushImage(lcd, x, y, w, ch, p, stride, wx, wy);
-#endif
-
-        y = yn;
-        p += unitLineSize;
+        h = getBufferHeight();
     }
 
-    return true;
+    auto p = (uint16_t*)buffer_;
+    p += sx + sy * bw_;
+    dst.drawBits16(dx, dy, w, h, bw_ << 1, p);
 }
 
 } // namespace graphics

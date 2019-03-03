@@ -42,55 +42,78 @@ FrameBufferBase::fill(uint32_t c)
 }
 
 void
-FrameBufferBase::blit(const FrameBufferBase& fb, int x, int y)
+FrameBufferBase::adjustTransferRegion(
+    int& dx, int& dy, int& sx, int& sy, int& w, int& h) const
 {
     int wx0 = getLeft();
     int wx1 = wx0 + getWidth();
     int wy0 = getTop();
     int wy1 = wy0 + getHeight();
 
-    int dx0 = x;
-    int dx1 = x + fb.getWidth();
-    int dy0 = y;
-    int dy1 = y + fb.getHeight();
+    int dx1 = dx + w;
+    int dy1 = dy + h;
 
-    int sx0 = 0;
-    int sy0 = 0;
-
-    if (dx0 < wx0)
+    if (dx < wx0)
     {
-        sx0 += wx0 - dx0;
-        dx0 = wx0;
+        sx += wx0 - dx;
+        dx = wx0;
     }
     if (dx1 > wx1)
     {
         dx1 = wx1;
     }
-    if (dy0 < wy0)
+    if (dy < wy0)
     {
-        sy0 += wy0 - dy0;
-        dy0 = wy0;
+        sy += wy0 - dy;
+        dy = wy0;
     }
     if (dy1 > wy1)
     {
         dy1 = wy1;
     }
+    w = dx1 - dx;
+    h = dy1 - dy;
+}
 
-    auto dy = dy0;
-    auto sy = sy0;
-    while (dy < dy1)
+void
+FrameBufferBase::drawBits16(
+    int x, int y, int w, int h, int pitchInBytes, const void* img16)
+{
+    // todo
+}
+
+void
+FrameBufferBase::transferTo(
+    FrameBufferBase& dst, int dx, int dy, int sx, int sy, int w, int h) const
+{
+    if (w == 0)
     {
-        auto dx = dx0;
-        auto sx = sx0;
-        while (dx < dx1)
-        {
-            setPixel(dx, dy, getPixel(sx, sy));
-            ++dx;
-            ++sx;
-        }
-        ++dy;
-        ++sy;
+        w = getBufferWidth();
     }
+    if (h == 0)
+    {
+        h = getBufferHeight();
+    }
+    dst.adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            dst.setPixel(dx + x, dy + y, getPixel(sx + x, sy + y));
+            // todo: フォーマット変換
+        }
+    }
+}
+
+void
+FrameBufferBase::transfer(
+    const FrameBufferBase& src, int dx, int dy, int sx, int sy, int w, int h)
+{
+    src.transferTo(*this, dx, dy, sx, sy, w, h);
 }
 
 void

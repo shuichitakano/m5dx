@@ -12,10 +12,11 @@ namespace ui
 
 struct WindowSettings
 {
-    static constexpr uint32_t SCREEN_WIDTH     = 320;
-    static constexpr uint32_t SCREEN_HEIGHT    = 240;
-    static constexpr uint32_t TITLE_BAR_HEIGHT = 12;
-    static constexpr uint32_t SCROLL_BAR_WIDTH = 4;
+    static constexpr uint32_t SCREEN_WIDTH         = 320;
+    static constexpr uint32_t SCREEN_HEIGHT        = 232;
+    static constexpr uint32_t SCREEN_HEIGHT_ACTUAL = 240;
+    static constexpr uint32_t TITLE_BAR_HEIGHT     = 12;
+    static constexpr uint32_t SCROLL_BAR_WIDTH     = 4;
 
     uint32_t titleTextColor     = 0xffffff;
     uint32_t titleTextEdgeColor = 0x000000;
