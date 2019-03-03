@@ -17,6 +17,21 @@ namespace strings
 {
 
 extern const Strings loadFile;
+extern const Strings selectFile;
+extern const Strings selectSong;
+extern const Strings volumeAdj;
+extern const Strings settings;
+extern const Strings select;
+extern const Strings play;
+extern const Strings stop;
+extern const Strings up;
+extern const Strings down;
+extern const Strings back;
+extern const Strings prev;
+extern const Strings next;
+extern const Strings volUp;
+extern const Strings volDown;
+
 } // namespace strings
 
 } // namespace ui

@@ -63,4 +63,18 @@ ControlBar::getSize() const
     return widgetSize_;
 }
 
+void
+ControlBar::set(int i, const std::string& text)
+{
+    if (i >= 0 && i < 3)
+    {
+        auto& t = state_[i].text_;
+        if (t != text)
+        {
+            t            = text;
+            needRefresh_ = true;
+        }
+    }
+}
+
 } // namespace ui

@@ -109,7 +109,18 @@ Display::drawBits16(
 
     if (pitchInBytes == w << 1)
     {
-        _getLCD()->pushImage(x, y, w, h, (uint16_t*)p);
+        static constexpr uint32_t unitTransferPixels = 1280;
+        // 40Mで2500pixelが1ms
+
+        int unitLine = unitTransferPixels / w;
+        while (h)
+        {
+            auto hh = std::min(unitLine, h);
+            _getLCD()->pushImage(x, y, w, hh, (uint16_t*)p);
+            y += hh;
+            p += pitchInBytes * hh;
+            h -= hh;
+        }
     }
     else
     {

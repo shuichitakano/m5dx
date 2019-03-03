@@ -13,12 +13,17 @@ namespace ui
 {
 
 void
-UIManager::append(const WidgetPtr& p, Vec2 pos)
+UIManager::push(const WidgetPtr& p, Vec2 pos)
 {
     std::lock_guard<sys::Mutex> lock(mutex_);
+    next_.push_back({pos, p});
+}
 
-    layer_.push_back({pos, p});
-    checkRenderStartLV();
+void
+UIManager::pop()
+{
+    DBOUT(("pop!!!\n"));
+    popReq_ = true;
 }
 
 void
@@ -53,15 +58,44 @@ UIManager::update(UpdateContext& ctx)
     {
         p->widget_->onUpdate(ctx);
     }
+
+    if (popReq_)
+    {
+        layer_.pop_back();
+        popReq_  = false;
+        refresh_ = true;
+        checkRenderStartLV();
+    }
+
+    if (!next_.empty())
+    {
+        layer_.insert(layer_.end(), next_.begin(), next_.end());
+        checkRenderStartLV();
+        next_.clear();
+    }
 }
 
 void
 UIManager::render(RenderContext& ctx)
 {
     std::lock_guard<sys::Mutex> lock(mutex_);
-    auto n = layer_.size();
-    for (auto i = renderStartLV_; i < n; ++i)
+
+    if (refresh_)
     {
+        ctx.updateInvalidatedRegion({320, 240});
+        refresh_ = false;
+    }
+
+    auto n = layer_.size();
+    for (auto i = 0; i < n; ++i)
+    {
+        // 0番目はButton tipなので必ず描く
+        // もうちょっとマシに書きたい
+        if (i != 0 && i < renderStartLV_)
+        {
+            continue;
+        }
+
         auto& l          = layer_[i];
         auto recoverPos  = ctx.updatePosition(l.pos_);
         auto recoverClip = ctx.updateClipRegion(l.widget_->getSize());

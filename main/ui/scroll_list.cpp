@@ -4,9 +4,11 @@
  */
 
 #include "scroll_list.h"
+#include "button_tip.h"
 #include "context.h"
 #include "key.h"
 #include "scroll_bar.h"
+#include "strings.h"
 #include <debug.h>
 #include <mutex>
 
@@ -81,6 +83,13 @@ ScrollList::onUpdate(UpdateContext& ctx)
     {
         ctx.disableInput();
 
+        if (auto* bt = ctx.getButtonTip())
+        {
+            bt->set(0, get(strings::up));
+            bt->set(1, decideText_);
+            bt->set(2, get(strings::down));
+        }
+
         int dial = key->getDial();
 
         if (key->isTrigger(0) || dial > 0)
@@ -123,7 +132,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
             {
                 DBOUT(("long press %d\n", selectIndex_));
                 ctx.acceptLongPress();
-                longPressFunc_(selectIndex_);
+                longPressFunc_(ctx, selectIndex_);
             }
         }
         else if (key->isReleaseEdge(1) || key->isReleaseEdge(3))
@@ -131,7 +140,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
             if (decideFunc_)
             {
                 DBOUT(("decide %d\n", selectIndex_));
-                decideFunc_(selectIndex_);
+                decideFunc_(ctx, selectIndex_);
             }
         }
     }

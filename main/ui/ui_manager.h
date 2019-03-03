@@ -23,11 +23,16 @@ class UIManager
     };
 
     std::vector<Layer> layer_;
+    std::vector<Layer> next_;
     size_t renderStartLV_ = 0;
     sys::Mutex mutex_;
 
+    bool popReq_  = false;
+    bool refresh_ = true;
+
 public:
-    void append(const WidgetPtr& p, Vec2 pos = {0, 0});
+    void push(const WidgetPtr& p, Vec2 pos = {0, 0});
+    void pop();
 
     void update(UpdateContext& ctx);
     void render(RenderContext& ctx);

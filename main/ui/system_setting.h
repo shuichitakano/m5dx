@@ -14,9 +14,14 @@ class SystemSettings
 {
     Language language_ = {Language::JAPANESE};
 
+    int volume_ = -6;
+
 public:
     Language getLanguage() const { return language_; }
     void setLanguage(Language l) { language_ = l; }
+
+    int getVolume() const { return volume_; }
+    void setVolume(int v) { volume_ = v; }
 
     static SystemSettings& instance();
 };

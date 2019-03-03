@@ -5,14 +5,22 @@
 #ifndef ACAAAD1C_E134_145C_2286_21780926CC3C
 #define ACAAAD1C_E134_145C_2286_21780926CC3C
 
-#include "window.h"
+#include "widget.h"
 
 namespace ui
 {
 
-class PlayerWindow : public Window
+class PlayerWindow : public Widget
 {
+    bool needRefresh_ = true;
+
+    bool longLeftCaptured_  = false;
+    bool longRightCaptured_ = false;
+
 public:
+    void onUpdate(UpdateContext& ctx) override;
+    void onRender(RenderContext& ctx) override;
+    Dim2 getSize() const override;
 };
 
 } // namespace ui

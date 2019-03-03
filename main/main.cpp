@@ -68,7 +68,6 @@ makeColor(int r, int g, int b)
 
 namespace
 {
-graphics::FrameBuffer waveViewBuffer_;
 MPU9250 IMU;
 } // namespace
 
@@ -85,9 +84,6 @@ setup()
     graphics::getDisplay().initialize();
     //    graphics::getDisplay().setWindow(120, 30, 20, 20);
     //    graphics::getDisplay().fill(100, 50, 250, 150, 0xffff);
-
-    //    waveViewBuffer_.initialize(128, 64, 16);
-    waveViewBuffer_.initialize(128, 128, 16);
 
     if (!SD.begin(TFCARD_CS_PIN, SPI, 40000000, ""))
     {
@@ -252,31 +248,6 @@ loop()
             io::BLEMidiClient::instance().put(m);
         }
     }
-
-#if 1
-    waveViewBuffer_.fill(waveViewBuffer_.makeColor(0, 0, 128));
-    auto red   = waveViewBuffer_.makeColor(255, 0, 0);
-    auto green = waveViewBuffer_.makeColor(0, 255, 0);
-
-    audio::AudioOutDriverManager::instance().lockHistoryBuffer();
-    static std::array<int16_t, 2> tmpWave[128];
-    audio::AudioOutDriverManager::instance().getHistoryBuffer().copyLatest(
-        tmpWave, 128);
-    audio::AudioOutDriverManager::instance().unlockHistoryBuffer();
-
-    auto* wave = tmpWave;
-    for (int i = 0; i < 128; ++i)
-    {
-        int y0 = std::min(127, std::max(0, 64 + (int)((*wave)[0] >> 9)));
-        int y1 = std::min(127, std::max(0, 64 + (int)((*wave)[1] >> 9)));
-        waveViewBuffer_.setPixel(i, y0, red);
-        waveViewBuffer_.setPixel(i, y1, green);
-        ++wave;
-    }
-
-    graphics::getDisplay().setWindow(0, 0, 320, 240);
-    graphics::getDisplay().transfer(waveViewBuffer_, 320 - 128, 240 - 128);
-#endif
 
 #if 0
     static int pixelNumber = 0; // = random(0, M5STACK_FIRE_NEO_NUM_LEDS - 1);

@@ -7,6 +7,7 @@
 
 #include "debug.h"
 #include "target.h"
+#include <audio/audio_out.h>
 #include <graphics/display.h>
 #include <graphics/font_data.h>
 #include <graphics/font_manager.h>
@@ -14,11 +15,12 @@
 #include <memory>
 #include <ui/context.h>
 #include <ui/key.h>
+#include <ui/system_setting.h>
 #include <ui/ui_manager.h>
 #include <wire.h>
 
 #include <ui/control_bar.h>
-#include <ui/file_window.h>
+#include <ui/player_window.h>
 
 namespace M5DX
 {
@@ -34,6 +36,8 @@ struct App
     ui::UIManager uiManager_;
     ui::KeyState keyState_;
 
+    std::shared_ptr<ui::ControlBar> controlBar_;
+
 public:
     App()
     {
@@ -47,8 +51,9 @@ public:
         fontKanji_.setData(fontKanjiBin.data());
 
         //
-        uiManager_.append(std::make_shared<ui::ControlBar>(), {0, 232});
-        uiManager_.append(std::make_shared<ui::FileWindow>("/"));
+        controlBar_ = std::make_shared<ui::ControlBar>();
+        uiManager_.push(controlBar_, {0, 232});
+        uiManager_.push(std::make_shared<ui::PlayerWindow>());
     }
 
     void tick()
@@ -72,8 +77,15 @@ public:
                              trigger,
                              dial);
 
-            ui::UpdateContext ctx(&keyState_);
+            ui::UpdateContext ctx(&uiManager_, &keyState_, controlBar_.get());
             uiManager_.update(ctx);
+        }
+        {
+            auto& ss       = ui::SystemSettings::instance();
+            auto& audioOut = audio::AudioOutDriverManager::instance();
+
+            float vol = expf(ss.getVolume() * 0.11512925464970229f);
+            audioOut.setVolume(vol);
         }
         {
             ui::RenderContext ctx;
