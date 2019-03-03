@@ -20,6 +20,8 @@ namespace ui
 {
 
 class KeyState;
+class ButtonTip;
+class UIManager;
 
 class Context
 {
@@ -115,20 +117,28 @@ public:
 
 class UpdateContext : public Context
 {
+    UIManager* uiManager_{};
     KeyState* keyState_{};
+    ButtonTip* buttonTip_{};
     bool enableInput_ = true;
 
 public:
-    UpdateContext(KeyState* ks)
-        : keyState_(ks)
+    UpdateContext(UIManager* uiManager, KeyState* ks, ButtonTip* bt)
+        : uiManager_(uiManager)
+        , keyState_(ks)
+        , buttonTip_(bt)
     {
     }
+
+    UIManager* getUIManager() { return uiManager_; }
 
     void setKeyState(KeyState* ks) { keyState_ = ks; }
     const KeyState* getKeyState() const
     {
         return enableInput_ ? keyState_ : nullptr;
     }
+
+    ButtonTip* getButtonTip() { return buttonTip_; }
 
     bool isEnableInput() const { return enableInput_; }
     void disableInput() { enableInput_ = false; }

@@ -57,11 +57,10 @@ private:
     uint32_t ww_ = 0;
     uint32_t wh_ = 0;
 
-    void* buffer_                = nullptr;
-    uint32_t bw_                 = 0;
-    uint32_t bh_                 = 0;
-    int bpp_                     = 0;
-    uint32_t unitTransferPixels_ = 1280; // 40Mで2500pixelが1ms
+    void* buffer_ = nullptr;
+    uint32_t bw_  = 0;
+    uint32_t bh_  = 0;
+    int bpp_      = 0;
 };
 
 } // namespace graphics

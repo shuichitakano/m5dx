@@ -67,6 +67,12 @@ setActiveMusicPlayer(MusicPlayer* p)
     activeMusicPlayer_ = p;
 }
 
+MusicPlayer*
+getActiveMusicPlayer()
+{
+    return activeMusicPlayer_;
+}
+
 bool
 playMusicFile(const char* filename, int track, bool terminateOld)
 {

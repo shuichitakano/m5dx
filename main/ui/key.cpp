@@ -13,9 +13,9 @@ namespace ui
 namespace
 {
 // us
-constexpr int repeatBegin_    = 500000;
-constexpr int repeatInterval_ = 100000;
-constexpr int longPressTime_  = 1000000;
+constexpr int repeatBegin_    = 300000;
+constexpr int repeatInterval_ = 50000;
+constexpr int longPressTime_  = 300000;
 } // namespace
 
 void
@@ -54,6 +54,11 @@ KeyState::update(bool b0, bool b1, bool b2, bool b3, int dial)
         {
             startTimeUS_     = currentTimeUS_;
             lastPulseTimeUS_ = currentTimeUS_ + repeatBegin_ - repeatInterval_;
+
+            if (!prev_)
+            {
+                startTime2US_ = currentTimeUS_;
+            }
         }
 
         int32_t d = currentTimeUS_ - startTimeUS_;
@@ -67,7 +72,8 @@ KeyState::update(bool b0, bool b1, bool b2, bool b3, int dial)
             }
         }
 
-        if (d > longPressTime_)
+        //        if (d > longPressTime_)
+        if (currentTimeUS_ - startTime2US_ > longPressTime_)
         {
             longPress_ = true;
         }

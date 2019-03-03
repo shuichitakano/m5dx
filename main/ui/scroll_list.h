@@ -8,6 +8,7 @@
 #include "widget.h"
 #include "widget_list.h"
 #include <functional>
+#include <string>
 #include <sys/mutex.h>
 
 namespace ui
@@ -21,10 +22,12 @@ class ScrollList : public Widget, public WidgetList
     bool needRefresh_          = true;
     bool needRefreshScrollBar_ = true;
 
-    using Func = std::function<void(int)>;
+    using Func = std::function<void(UpdateContext& ctx, int)>;
 
     Func decideFunc_;
     Func longPressFunc_;
+
+    std::string decideText_;
 
     sys::Mutex mutex_;
 
@@ -39,6 +42,7 @@ public:
 
     void setDecideFunc(Func&& f) { decideFunc_ = std::move(f); }
     void setLongPressFunc(Func&& f) { longPressFunc_ = std::move(f); }
+    void setDecideText(const std::string& t) { decideText_ = t; }
 
     int getIndex() const { return selectIndex_; }
     void setIndex(int i);

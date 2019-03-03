@@ -19,6 +19,7 @@ MusicPlayer* findMusicPlayerFromFile(const char* filename);
 
 void terminateActiveMusicPlayerWithout(MusicPlayer* without);
 void setActiveMusicPlayer(MusicPlayer* p);
+MusicPlayer* getActiveMusicPlayer();
 
 bool
 playMusicFile(const char* filename, int track = -1, bool terminateOld = true);

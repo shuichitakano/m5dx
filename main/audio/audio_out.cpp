@@ -153,6 +153,14 @@ public:
         mutex_.unlock();
         return false;
     }
+
+    void setVolume(float v)
+    {
+        if (driver_)
+        {
+            driver_->setVolume(v);
+        }
+    }
 };
 
 AudioOutDriverManager::AudioOutDriverManager()
@@ -210,6 +218,12 @@ void
 AudioOutDriverManager::unlock()
 {
     pimpl_->mutex_.unlock();
+}
+
+void
+AudioOutDriverManager::setVolume(float v)
+{
+    pimpl_->setVolume(v);
 }
 
 size_t

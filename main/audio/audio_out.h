@@ -45,6 +45,7 @@ public:
 
     void setAudioStreamOut(AudioStreamOut*);
     void setDriver(AudioOutDriver*);
+    void setVolume(float v);
 
     bool lock(const AudioOutDriver*);
     void unlock();
