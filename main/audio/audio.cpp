@@ -105,7 +105,7 @@ public:
     {
         uint16_t outSampleBuffer[UNIT_SAMPLE_COUNT << 1];
 
-        static constexpr float baseScale = 0.3f; // 歪み避け
+        static constexpr float baseScale = 0.3f * 2; // 歪み避け
 
         int scale = int(volume_ * baseScale * 128);
         // int bias  = 32768;

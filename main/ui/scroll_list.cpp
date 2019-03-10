@@ -15,6 +15,11 @@
 namespace ui
 {
 
+ScrollList::ScrollList()
+{
+    decideText_ = get(strings::select); // default
+}
+
 void
 ScrollList::touchSelectWidget()
 {
@@ -214,29 +219,31 @@ ScrollList::onRender(RenderContext& ctx)
         // todo: アイテムごとの大きさが違う場合
     }
 
-    if (needRefresh_ || needRefreshScrollBar_)
+    ctx.applyClipRegion();
+
+    auto wsize = getSize();
+    auto& ws   = ctx.getWindowSettings();
+
     {
-        ctx.applyClipRegion();
-
-        auto wsize = getSize();
-        auto& ws   = ctx.getWindowSettings();
-
         // listのあまり領域
         Vec2 p{0, int(n * step + displayOffset_)};
-        if (p.y < wsize.h)
+        Dim2 s{wsize.w - WindowSettings::SCROLL_BAR_WIDTH, wsize.h - p.y};
+        if (p.y < wsize.h && (needRefresh_ || ctx.isInvalidated(p, s)))
         {
-            ctx.fill(
-                p,
-                {wsize.w - WindowSettings::SCROLL_BAR_WIDTH, wsize.h - p.y},
-                ws.borderColor);
+            ctx.fill(p, s, ws.borderColor);
         }
-
-        // スクロールバー
-        drawVScrollBar(ctx, wsize, -displayOffset_, wsize.h, step * n);
-
-        needRefreshScrollBar_ = false;
     }
 
+    {
+        // スクロールバー
+        drawVScrollBar(ctx,
+                       wsize,
+                       -displayOffset_,
+                       wsize.h,
+                       step * n,
+                       needRefreshScrollBar_ || needRefresh_);
+        needRefreshScrollBar_ = false;
+    }
     needRefresh_ = false;
 }
 

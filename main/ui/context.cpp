@@ -5,6 +5,7 @@
 
 #include "context.h"
 #include "key.h"
+#include "ui_manager.h"
 #include <debug.h>
 
 namespace ui
@@ -30,6 +31,15 @@ UpdateContext::acceptLongPress()
     }
 }
 
+void
+UpdateContext::popManagedUI()
+{
+    if (uiManager_)
+    {
+        uiManager_->pop();
+    }
+}
+
 /////////////////
 
 RenderContext::RenderContext()
@@ -48,6 +58,12 @@ bool
 RenderContext::isInvalidated(const Dim2& size) const
 {
     return invalidatedRegion_.isIntersect({getCurrentPosition(), size});
+}
+
+bool
+RenderContext::isInvalidated(const Vec2& pos, const Dim2& size) const
+{
+    return invalidatedRegion_.isIntersect({getCurrentPosition() + pos, size});
 }
 
 void

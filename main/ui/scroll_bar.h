@@ -11,8 +11,12 @@ namespace ui
 {
 
 // 領域の右側に縦スクロールバーを描画する
-void drawVScrollBar(
-    RenderContext& ctx, Dim2 size, int barPos, int barSize, int regionSize);
+void drawVScrollBar(RenderContext& ctx,
+                    Dim2 size,
+                    int barPos,
+                    int barSize,
+                    int regionSize,
+                    bool forceDraw);
 
 // 指定領域のサイズで縦スクロールバーを描画する
 void _drawVScrollBar(RenderContext& ctx,

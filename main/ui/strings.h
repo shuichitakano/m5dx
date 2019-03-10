@@ -31,6 +31,39 @@ extern const Strings prev;
 extern const Strings next;
 extern const Strings volUp;
 extern const Strings volDown;
+extern const Strings enable;
+extern const Strings disable;
+extern const Strings yes;
+extern const Strings no;
+extern const Strings _auto;
+extern const Strings shuffleMode;
+extern const Strings loopCount;
+extern const Strings soundModule;
+extern const Strings trackMask;
+extern const Strings trackSelect;
+
+extern const Strings internalSpeaker;
+extern const Strings backLightIntensity;
+extern const Strings dispOffReverse;
+extern const Strings trackOverride;
+extern const Strings playerDiadMode;
+extern const Strings autoBTMIDI;
+extern const Strings autoBTAudio;
+
+extern const Strings language;
+extern const Strings japanese;
+extern const Strings english;
+
+extern const Strings repeatMode;
+extern const Strings all;
+extern const Strings single;
+extern const Strings none;
+
+extern const Strings writeModuleID;
+extern const Strings writeModuleMes;
+
+extern const Strings BTAudio;
+extern const Strings BTMIDI;
 
 } // namespace strings
 

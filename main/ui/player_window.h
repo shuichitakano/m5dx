@@ -6,6 +6,7 @@
 #define ACAAAD1C_E134_145C_2286_21780926CC3C
 
 #include "widget.h"
+#include <string>
 
 namespace ui
 {
@@ -16,6 +17,8 @@ class PlayerWindow : public Widget
 
     bool longLeftCaptured_  = false;
     bool longRightCaptured_ = false;
+
+    std::string title_;
 
 public:
     void onUpdate(UpdateContext& ctx) override;

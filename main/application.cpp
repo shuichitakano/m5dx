@@ -13,6 +13,7 @@
 #include <graphics/font_manager.h>
 #include <io/file_util.h>
 #include <memory>
+#include <music_player/music_player_manager.h>
 #include <ui/context.h>
 #include <ui/key.h>
 #include <ui/system_setting.h>
@@ -58,6 +59,8 @@ public:
 
     void tick()
     {
+        music_player::tickMusicPlayerManager();
+
         {
             int dial     = 0;
             bool trigger = false;

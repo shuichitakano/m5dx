@@ -6,7 +6,6 @@
 #include "file_window.h"
 #include "context.h"
 #include "strings.h"
-#include "ui_manager.h"
 #include <debug.h>
 #include <mutex>
 
@@ -21,6 +20,11 @@ FileWindow::FileWindow(const std::string& path)
     setPath(path);
 
     list_.setLongPressFunc([this](UpdateContext& ctx, int) {
+        if (list_.getPath() == "/")
+        {
+            ctx.popManagedUI();
+            return;
+        }
         auto pathSet = list_.getSeparatePath();
         list_.setFollowFile(pathSet.second);
         setPath(pathSet.first);
@@ -29,8 +33,6 @@ FileWindow::FileWindow(const std::string& path)
     list_.setDecideText(get(strings::select));
     list_.setDecideFunc([this](UpdateContext& ctx, int i) {
         DBOUT(("decide index %d\n", i));
-
-        auto* uiManager = ctx.getUIManager();
 
         list_.getMutex().lock();
         auto item  = list_.getItem(i);
@@ -63,14 +65,11 @@ FileWindow::FileWindow(const std::string& path)
         {
             // file
             DBOUT(("select file %s\n", name.c_str()));
+            // list_.cancelAndWaitIdle();
+            // music_player::playMusicFile(fn.c_str(), 0, true);
 
-            list_.cancelAndWaitIdle();
-            music_player::playMusicFile(fn.c_str(), 0, true);
-
-            if (uiManager)
-            {
-                uiManager->pop();
-            }
+            music_player::playPlayList(list_.makeDefaultPlayList());
+            ctx.popManagedUI();
         }
     });
 }

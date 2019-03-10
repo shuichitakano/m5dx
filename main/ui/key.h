@@ -21,7 +21,6 @@ class KeyState
     int dialMod_ = 0;
 
     uint32_t startTimeUS_     = 0;
-    uint32_t startTime2US_    = 0;
     uint32_t currentTimeUS_   = 0;
     uint32_t lastPulseTimeUS_ = 0;
 

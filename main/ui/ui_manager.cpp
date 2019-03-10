@@ -20,9 +20,19 @@ UIManager::push(const WidgetPtr& p, Vec2 pos)
 }
 
 void
+UIManager::push(const WidgetPtr& p)
+{
+    std::lock_guard<sys::Mutex> lock(mutex_);
+    auto size = p->getSize();
+    Vec2 pos  = {int((WindowSettings::SCREEN_WIDTH - size.w) >> 1),
+                int((WindowSettings::SCREEN_HEIGHT - size.h) >> 1)};
+    DBOUT(("push (%d, %d)\n", pos.x, pos.y));
+    next_.push_back({pos, p});
+}
+
+void
 UIManager::pop()
 {
-    DBOUT(("pop!!!\n"));
     popReq_ = true;
 }
 
@@ -35,7 +45,7 @@ UIManager::checkRenderStartLV()
         renderStartLV_ = 0;
         return;
     }
-    for (size_t i = n - 1; i > 1; ++i)
+    for (size_t i = n - 1; i > 1; --i)
     {
         auto& l = layer_[i];
         BBox bb(l.pos_, l.widget_->getSize());

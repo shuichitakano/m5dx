@@ -15,12 +15,20 @@ constexpr int minBarSize_ = 2;
 }
 
 void
-drawVScrollBar(
-    RenderContext& ctx, Dim2 size, int barPos, int barSize, int regionSize)
+drawVScrollBar(RenderContext& ctx,
+               Dim2 size,
+               int barPos,
+               int barSize,
+               int regionSize,
+               bool forceDraw)
 {
     auto bw = WindowSettings::SCROLL_BAR_WIDTH;
-    _drawVScrollBar(
-        ctx, {int(size.w - bw), 0}, {bw, size.h}, barPos, barSize, regionSize);
+    Vec2 bp = {int(size.w - bw), 0};
+    Dim2 bs = {bw, size.h};
+    if (forceDraw || ctx.isInvalidated(bp, bs))
+    {
+        _drawVScrollBar(ctx, bp, bs, barPos, barSize, regionSize);
+    }
 }
 
 void

@@ -31,7 +31,8 @@ class UIManager
     bool refresh_ = true;
 
 public:
-    void push(const WidgetPtr& p, Vec2 pos = {0, 0});
+    void push(const WidgetPtr& p, Vec2 pos);
+    void push(const WidgetPtr& p);
     void pop();
 
     void update(UpdateContext& ctx);
