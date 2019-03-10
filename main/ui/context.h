@@ -131,6 +131,7 @@ public:
     }
 
     UIManager* getUIManager() { return uiManager_; }
+    void popManagedUI();
 
     void setKeyState(KeyState* ks) { keyState_ = ks; }
     const KeyState* getKeyState() const
@@ -175,6 +176,8 @@ public:
 
     // { currentPos, size } の Rectが無効化領域にかかっているか調べる
     bool isInvalidated(const Dim2& size) const;
+    bool isInvalidated(const Vec2& pos, const Dim2& size) const;
+
     void applyClipRegion();
     uint32_t makeColor(uint32_t c) const;
     void setFontColor(uint32_t c);

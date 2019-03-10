@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <io/file_util.h>
 #include <music_player/music_player_manager.h>
+#include <music_player/play_list.h>
 #include <mutex>
 #include <sys/job_manager.h>
 
@@ -101,6 +102,20 @@ FileList::cancelAndWaitIdle()
     abortReq_ = true;
     sys::getDefaultJobManager().waitIdle();
     abortReq_ = false;
+}
+
+int
+FileList::makeDefaultPlayList() const
+{
+    auto& pl = music_player::getDefaultPlayList();
+    pl.clear();
+    pl.reserve(files_.size());
+    for (auto& f : files_)
+    {
+        pl.add(makeAbsPath(f.filename_));
+    }
+    pl.shuffle();
+    return getIndex() - directories_.size();
 }
 
 #if 0
@@ -434,7 +449,6 @@ FileList::Item::onRender(RenderContext& ctx)
         ctx.put({0, 0}, tmpFB);
 
         updated_ = false;
-        return;
     }
 }
 
@@ -461,9 +475,9 @@ FileList::File::_render(RenderContext& ctx)
     static constexpr Vec2 iconPos      = {2, line0Y};
 
     static constexpr uint32_t titleColor    = 0xffffff;
-    static constexpr uint32_t formatColor   = 0x606060;
-    static constexpr uint32_t fileNameColor = 0x000000;
-    static constexpr uint32_t fileSizeColor = 0x000000;
+    static constexpr uint32_t formatColor   = 0xff8040;
+    static constexpr uint32_t fileNameColor = 0xc0c0c0;
+    static constexpr uint32_t fileSizeColor = 0xc0c0c0;
     static constexpr uint32_t iconColor     = 0xffffff;
 
     uint8_t icon[] = {

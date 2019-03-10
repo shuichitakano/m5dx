@@ -8,6 +8,7 @@
 #include "context.h"
 #include "file_window.h"
 #include "key.h"
+#include "setting_window.h"
 #include "strings.h"
 #include "system_setting.h"
 #include "ui_manager.h"
@@ -42,6 +43,8 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
         bool longLeft  = key->isLongPress(0);
         bool longRight = key->isLongPress(2);
 
+        bool prevCaptured_ = longLeftCaptured_ || longRightCaptured_;
+
         longLeftCaptured_ =
             longLeft && (longLeftCaptured_ || !longRightCaptured_);
         longRightCaptured_ =
@@ -74,37 +77,61 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
             bt->set(0, get(strings::prev));
             bt->set(1, get(strings::next));
             bt->set(2, get(strings::selectSong));
-        }
-        else if (playing)
-        {
-            bt->set(0, get(strings::settings));
-            bt->set(1, get(strings::stop));
-            bt->set(2, get(strings::next));
 
+            if (key->isReleaseEdge(0))
+            {
+                music_player::prevOrRewindPlayList();
+            }
             if (key->isReleaseEdge(1))
             {
-                if (mp)
-                {
-                    mp->stop();
-                }
+                music_player::nextPlayList(true);
             }
         }
-        else
+        else if (!prevCaptured_)
         {
-            bt->set(0, get(strings::settings));
-            bt->set(1, get(strings::play));
-            bt->set(2, get(strings::selectFile));
-
-            if (key->isReleaseEdge(1))
+            if (playing)
             {
-                if (mp)
+                bt->set(0, get(strings::settings));
+                bt->set(1, get(strings::stop));
+                bt->set(2, get(strings::next));
+
+                if (key->isReleaseEdge(0))
                 {
-                    mp->play();
+                    uiManager->push(std::make_shared<SettingWindow>());
+                }
+                if (key->isReleaseEdge(1))
+                {
+                    if (mp)
+                    {
+                        mp->pause();
+                    }
+                }
+                if (key->isReleaseEdge(2))
+                {
+                    music_player::nextPlayList(true);
                 }
             }
-            if (key->isReleaseEdge(2))
+            else
             {
-                uiManager->push(std::make_shared<ui::FileWindow>("/"));
+                bt->set(0, get(strings::settings));
+                bt->set(1, get(strings::play));
+                bt->set(2, get(strings::selectFile));
+
+                if (key->isReleaseEdge(0))
+                {
+                    uiManager->push(std::make_shared<SettingWindow>());
+                }
+                if (key->isReleaseEdge(1))
+                {
+                    if (mp)
+                    {
+                        mp->play();
+                    }
+                }
+                if (key->isReleaseEdge(2))
+                {
+                    uiManager->push(std::make_shared<FileWindow>("/"));
+                }
             }
         }
     }
@@ -113,7 +140,8 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
 void
 PlayerWindow::onRender(RenderContext& ctx)
 {
-    if (needRefresh_ || ctx.isInvalidated(widgetSize_))
+    bool redraw = needRefresh_ || ctx.isInvalidated(widgetSize_);
+    if (redraw)
     {
         ctx.applyClipRegion();
         ctx.updateInvalidatedRegion(getSize());
@@ -122,13 +150,31 @@ PlayerWindow::onRender(RenderContext& ctx)
         needRefresh_ = false;
     }
 
-    auto& fm = ctx.getFontManager();
+    auto* player = music_player::getActiveMusicPlayer();
+    auto& ss     = SystemSettings::instance();
+    auto& fm     = ctx.getFontManager();
     fm.setEdgedMode(false);
-    fm.setTransparentMode(false);
+    fm.setTransparentMode(true);
 
-    auto& ss = SystemSettings::instance();
+    {
+        auto title = player ? player->getTitle() : std::string();
+        if (redraw || title_ != title)
+        {
+            title_ = title;
+
+            static constexpr Vec2 pos       = {0, 200};
+            static constexpr Dim2 size      = {320, 8};
+            static constexpr uint32_t col   = 0xffc080;
+            static constexpr uint32_t bgcol = 0x200000;
+            ctx.fill(pos, size, bgcol);
+            ctx.setFontColor(col);
+            ctx.putText(title.c_str(), pos, size);
+        }
+    }
+
+    fm.setTransparentMode(false);
     char buf[100];
-    snprintf(buf, sizeof(buf), "vol %d ", ss.getVolume());
+    snprintf(buf, sizeof(buf), "vol %d db", ss.getVolume());
     ctx.setFontColor(0xffffff);
     ctx.putText(buf, {128, 0}, {100, 8});
 

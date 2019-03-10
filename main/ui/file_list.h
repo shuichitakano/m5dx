@@ -6,7 +6,6 @@
 #define _07D526DB_9134_13FE_1576_3EA1586E6814
 
 #include "scroll_list.h"
-#include "widget.h"
 #include <music_player/file_format.h>
 #include <string>
 #include <sys/mutex.h>
@@ -22,8 +21,7 @@ class FileList : public ScrollList
 
     struct Item : public Widget
     {
-        bool updated_  = true;
-        bool selected_ = false;
+        bool updated_ = true;
 
     public:
         Dim2 getSize() const override;
@@ -89,6 +87,7 @@ public:
     const std::string& getPath() const { return path_; }
     std::string makeAbsPath(const std::string& name) const;
     void cancelAndWaitIdle();
+    int makeDefaultPlayList() const;
 
     Dim2 getSize() const override;
 

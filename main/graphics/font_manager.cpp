@@ -76,6 +76,7 @@ FontManager::putFont(int code, const FontData* f)
         }
         x_ = vx_;
         y_ += h;
+        return;
     }
     if (y_ + h > vy_ + vh_)
     {
@@ -179,11 +180,39 @@ FontManager::computeTextSize(const char* str, int& w, int& h)
     w = 0;
     h = 0;
     if (!asciiFont_ || !kanjiFont_)
+    {
         return;
+    }
 
-    /* かり */
-    w = strlen(str) * kanjiFont_->width() >> 1;
-    h = kanjiFont_->height();
+    auto line = [&]() -> std::pair<bool, int> {
+        int i = 0;
+        while (char c = *str++)
+        {
+            if (c == '\n')
+            {
+                return {false, i};
+            }
+            ++i;
+        }
+        return {true, i};
+    };
+
+    int mw = 0;
+    int mh = 0;
+    while (1)
+    {
+        auto r = line();
+        mw     = std::max(r.second * kanjiFont_->width() >> 1, mw);
+        mh += kanjiFont_->height();
+
+        if (r.first)
+        {
+            break;
+        }
+    }
+
+    w = mw;
+    h = mh;
 }
 
 void

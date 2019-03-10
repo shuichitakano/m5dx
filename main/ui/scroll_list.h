@@ -32,6 +32,7 @@ class ScrollList : public Widget, public WidgetList
     sys::Mutex mutex_;
 
 public:
+    ScrollList();
     void setDirectionIsVertical(bool v) { vertical_ = v; }
 
     // スクロール方向のWidgetサイズを取得

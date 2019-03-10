@@ -52,17 +52,14 @@ KeyState::update(bool b0, bool b1, bool b2, bool b3, int dial)
     {
         if (edge_)
         {
-            startTimeUS_     = currentTimeUS_;
             lastPulseTimeUS_ = currentTimeUS_ + repeatBegin_ - repeatInterval_;
 
             if (!prev_)
             {
-                startTime2US_ = currentTimeUS_;
+                startTimeUS_ = currentTimeUS_;
             }
         }
 
-        int32_t d = currentTimeUS_ - startTimeUS_;
-        //        if (d > repeatBegin_)
         {
             int32_t pd = currentTimeUS_ - lastPulseTimeUS_;
             if (pd >= repeatInterval_)
@@ -72,8 +69,7 @@ KeyState::update(bool b0, bool b1, bool b2, bool b3, int dial)
             }
         }
 
-        //        if (d > longPressTime_)
-        if (currentTimeUS_ - startTime2US_ > longPressTime_)
+        if (currentTimeUS_ - startTimeUS_ > longPressTime_)
         {
             longPress_ = true;
         }

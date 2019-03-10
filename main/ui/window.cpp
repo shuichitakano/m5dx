@@ -37,9 +37,11 @@ Window::setChild(Widget* w, bool fitToClient)
 void
 Window::setTitle(const std::string& str)
 {
-    //    DBOUT(("title = %s\n", str.c_str());
-    title_       = str;
-    needRefresh_ = true;
+    if (title_ != str)
+    {
+        title_       = str;
+        needRefresh_ = true;
+    }
 }
 
 void
