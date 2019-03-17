@@ -50,7 +50,17 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
         longRightCaptured_ =
             longRight && (longRightCaptured_ || !longLeftCaptured_);
 
+        static constexpr int minVol = -30;
+        static constexpr int maxVol = 6;
+
         auto& ss = SystemSettings::instance();
+        int dial = key->getDial();
+        if (dial && ss.getPlayerDialMode() == PlayerDialMode::VOLUME)
+        {
+            auto v = ss.getVolume();
+            v      = std::min(maxVol, std::max(minVol, v + dial));
+            ss.setVolume(v);
+        }
 
         if (longLeftCaptured_)
         {
@@ -58,9 +68,7 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
             bt->set(1, get(strings::volDown));
             bt->set(2, get(strings::volUp));
 
-            auto v                      = ss.getVolume();
-            static constexpr int minVol = -30;
-            static constexpr int maxVol = 6;
+            auto v = ss.getVolume();
             if (key->isTrigger(1))
             {
                 v = std::max(v - 1, minVol);
@@ -130,7 +138,8 @@ PlayerWindow::onUpdate(UpdateContext& ctx)
                 }
                 if (key->isReleaseEdge(2))
                 {
-                    uiManager->push(std::make_shared<FileWindow>("/"));
+                    auto curFile = music_player::getCurrentPlayFile();
+                    uiManager->push(std::make_shared<FileWindow>(curFile));
                 }
             }
         }

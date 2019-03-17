@@ -9,12 +9,29 @@
 namespace graphics
 {
 
+namespace
+{
+constexpr int BACKLIGHT_PWM_CH = 7;
+constexpr int BACKLIGHT_FREQ   = 100000;
+
+} // namespace
+
 bool
 Display::initialize()
 {
     display_.begin();
+    ledcSetup(BACKLIGHT_PWM_CH, BACKLIGHT_FREQ, 8);
+
+    setBackLightIntensity(80);
+
     setWindow(0, 0, getBufferWidth(), getBufferHeight());
     return true;
+}
+
+void
+Display::setBackLightIntensity(int v)
+{
+    ledcWrite(BACKLIGHT_PWM_CH, v);
 }
 
 void

@@ -13,6 +13,8 @@
 #include <utility/Config.h>
 #include <utility>
 
+#include <driver/dac.h>
+
 #include <utility/MPU9250.h>
 
 #include <dirent.h>
@@ -97,7 +99,9 @@ setup()
     target::initGPIO();
     target::restoreBus();
 
-    dacWrite(25, 0);
+    //    dacWrite(25, 0);
+    dac_output_disable(DAC_CHANNEL_1);
+
     audio::AudioOutDriverManager::instance().start();
     audio::initialize();
 

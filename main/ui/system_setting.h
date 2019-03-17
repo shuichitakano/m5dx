@@ -14,6 +14,7 @@ namespace ui
 enum class SoundModule
 {
     AUTO,
+    NOTHING,
     YM2151,
     YMF288,
 };
@@ -31,6 +32,14 @@ enum class PlayerDialMode
     TRACK_SELECT,
 };
 
+enum class InitialBTMode
+{
+    DISABLE,
+    _30SEC,
+    _60SEC,
+    ALWAYS,
+};
+
 struct TrackSetting
 {
     bool mask_     = true;
@@ -41,14 +50,24 @@ using BluetoothADDR = std::array<uint8_t, 6>;
 
 struct BluetoothMIDI
 {
-    bool autoConnect = false;
-    BluetoothADDR addr{};
+    static constexpr size_t N_PAIRED_ADDR = 4;
+    InitialBTMode initialMode             = InitialBTMode::_60SEC;
+    size_t nAddr                          = 0;
+    BluetoothADDR addr[N_PAIRED_ADDR]{};
+
+    void update(const BluetoothADDR& v);
+    bool find(const BluetoothADDR& v) const;
 };
 
 struct BluetoothAudio
 {
-    bool autoConnect = false;
-    BluetoothADDR addr{};
+    static constexpr size_t N_PAIRED_ADDR = 4;
+    InitialBTMode initialMode             = InitialBTMode::_60SEC;
+    size_t nAddr                          = 0;
+    BluetoothADDR addr[N_PAIRED_ADDR]{};
+
+    void update(const BluetoothADDR& v);
+    bool find(const BluetoothADDR& v) const;
 };
 
 class SystemSettings
@@ -59,7 +78,7 @@ class SystemSettings
     int loopCount_             = 1;
     bool shuffleMode_          = false;
     RepeatMode repeatMode_     = RepeatMode::ALL;
-    int backLightIntensity_    = 80;
+    int backLightIntensity_    = 30;
     bool internalSpeaker_      = true;
     bool displayOffIfReverse_  = true; // 反転で画面オフ
     PlayerDialMode playerDial_ = PlayerDialMode::VOLUME;
@@ -109,6 +128,9 @@ public:
     BluetoothAudio& getBluetoothAudio() { return btAudio_; }
     BluetoothMIDI& getBluetoothMIDI() { return btMIDI_; }
 
+    //
+    void applyBackLightIntensity() const;
+
     static SystemSettings& instance();
 };
 
@@ -116,6 +138,7 @@ const char* toString(SoundModule v);
 const char* toString(Language l);
 const char* toString(RepeatMode m);
 const char* toString(PlayerDialMode m);
+const char* toString(InitialBTMode m);
 
 } // namespace ui
 

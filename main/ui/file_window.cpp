@@ -17,7 +17,14 @@ namespace ui
 FileWindow::FileWindow(const std::string& path)
 {
     setChild(&list_);
-    setPath(path);
+
+    {
+        auto p   = path.rfind('/');
+        auto dir = p == std::string::npos || p == 0 ? "/" : path.substr(0, p);
+        auto fn  = p == std::string::npos ? "" : path.substr(p + 1);
+        list_.setFollowFile(fn);
+        setPath(dir);
+    }
 
     list_.setLongPressFunc([this](UpdateContext& ctx, int) {
         if (list_.getPath() == "/")

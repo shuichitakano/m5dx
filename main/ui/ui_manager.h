@@ -27,8 +27,8 @@ class UIManager
     size_t renderStartLV_ = 0;
     sys::Mutex mutex_;
 
-    bool popReq_  = false;
-    bool refresh_ = true;
+    size_t popReq_ = 0;
+    bool refresh_  = true;
 
 public:
     void push(const WidgetPtr& p, Vec2 pos);
