@@ -4,6 +4,7 @@
  */
 
 #include "setting_window.h"
+#include "bt_audio_window.h"
 #include "context.h"
 #include "dialog.h"
 #include "strings.h"
@@ -34,7 +35,8 @@ public:
                      T current,
                      const Func& setFunc,
                      const ToString& toString,
-                     const std::array<T, N>& values)
+                     const std::array<T, N>& values,
+                     bool closeOnDecide = true)
     {
         setTitle(title);
 
@@ -48,11 +50,14 @@ public:
             }
         }
 
-        getList().setDecideFunc([values, setFunc](UpdateContext& ctx, int i) {
+        getList().setDecideFunc([=](UpdateContext& ctx, int i) {
             if (i >= 0 && i < N)
             {
                 setFunc(ctx, values[i]);
-                ctx.popManagedUI();
+                if (closeOnDecide)
+                {
+                    ctx.popManagedUI();
+                }
             }
         });
     }
@@ -122,10 +127,27 @@ public:
 };
 */
 
+class LabelItem final : public SimpleList::ItemWithTitle
+{
+    using GetTitleFunc = std::function<std::string()>;
+    using DecideFunc   = std::function<void(UpdateContext& ctx)>;
+
+    GetTitleFunc getTitleFunc_;
+    DecideFunc decideFunc_;
+
+public:
+    LabelItem(const GetTitleFunc& getTitleFunc, const DecideFunc& decideFunc)
+        : getTitleFunc_(getTitleFunc)
+        , decideFunc_(decideFunc)
+    {
+    }
+    std::string getTitle() const override { return getTitleFunc_(); }
+    void decide(UpdateContext& ctx) override { decideFunc_(ctx); }
+};
+
 template <class T, size_t N>
 class ListItem final : public SimpleList::ItemWithValue
 {
-
     using GetTitleFunc = std::function<std::string()>;
     using GetValueFunc = std::function<T()>;
     using SetValueFunc = std::function<void(UpdateContext&, T)>;
@@ -192,14 +214,17 @@ ListItem<Language, 2> languageItem(
     [](auto l) { return toString(l); },
     {Language::ENGLISH, Language::JAPANESE});
 
-ListItem<SoundModule, 3> soundModuleItem(
-    [] { return get(strings::soundModule); },
-    [] { return SystemSettings::instance().getSoundModule(); },
-    [](UpdateContext&, auto v) {
-        SystemSettings::instance().setSoundModule(v);
-    },
-    [](auto v) { return toString(v); },
-    {SoundModule::AUTO, SoundModule::YM2151, SoundModule::YMF288});
+ListItem<SoundModule, 4>
+    soundModuleItem([] { return get(strings::soundModule); },
+                    [] { return SystemSettings::instance().getSoundModule(); },
+                    [](UpdateContext&, auto v) {
+                        SystemSettings::instance().setSoundModule(v);
+                    },
+                    [](auto v) { return toString(v); },
+                    {SoundModule::AUTO,
+                     SoundModule::NOTHING,
+                     SoundModule::YM2151,
+                     SoundModule::YMF288});
 
 void
 writeModuleID(UpdateContext& ctx, SoundModule id)
@@ -213,22 +238,39 @@ writeModuleID(UpdateContext& ctx, SoundModule id)
         p->setMessage(buf);
 
         p->appendButton(get(strings::no));
-        p->appendButton(get(strings::yes),
-                        [](UpdateContext&) { DBOUT(("write!!\n")); });
+        p->appendButton(get(strings::yes), [](UpdateContext& ctx) {
+            DBOUT(("write!!\n"));
+            ctx.popManagedUI(); // もう一つ閉じる
+        });
 
         um->push(p);
     }
 }
 
-ListItem<SoundModule, 2>
-    writeModuleIDItem([] { return get(strings::writeModuleID); },
-                      [] {
-                          static SoundModule mod = SoundModule::YM2151;
-                          return mod;
-                      },
-                      [](UpdateContext& ctx, auto v) { writeModuleID(ctx, v); },
-                      [](auto v) { return toString(v); },
-                      {SoundModule::YM2151, SoundModule::YMF288});
+auto makeWriteModuleListWindow = [] {
+    return new ListSelectWindow<SoundModule, 2>(
+        get(strings::writeModuleID),
+        {},
+        [](UpdateContext& ctx, SoundModule v) { writeModuleID(ctx, v); },
+        [](SoundModule v) { return toString(v); },
+        {SoundModule::YM2151, SoundModule::YMF288},
+        false);
+};
+
+std::string
+make3DotString(const std::string& str)
+{
+    return str + "...";
+}
+
+LabelItem writeModuleMenuItem(
+    [] { return make3DotString(get(strings::writeModuleID)); },
+    [](UpdateContext& ctx) {
+        if (auto* uiManager = ctx.getUIManager())
+        {
+            uiManager->push(WidgetPtr{makeWriteModuleListWindow()});
+        }
+    });
 
 ListItem<PlayerDialMode, 2> playerDialModeItem(
     [] { return get(strings::playerDiadMode); },
@@ -273,14 +315,15 @@ ListItem<int, 5> loopCountItem(
     [](auto v) { return toString(v); },
     {1, 2, 3, 4, 5});
 
-ListItem<int, 5> backLightItem(
+ListItem<int, 10> backLightItem(
     [] { return get(strings::backLightIntensity); },
     [] { return SystemSettings::instance().getBackLightIntensity(); },
     [](UpdateContext&, auto v) {
         SystemSettings::instance().setBackLightIntensity(v);
+        SystemSettings::instance().applyBackLightIntensity();
     },
     [](auto v) { return toString(v); },
-    {20, 40, 60, 80, 100});
+    {10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
 
 ListItem<RepeatMode, 3> repeatModeItem(
     [] { return get(strings::repeatMode); },
@@ -289,23 +332,38 @@ ListItem<RepeatMode, 3> repeatModeItem(
     [](auto v) { return toString(v); },
     {RepeatMode::NONE, RepeatMode::ALL, RepeatMode::SINGLE});
 
-ListItem<bool, 2> autoBTMIDIItem(
-    [] { return get(strings::autoBTMIDI); },
-    [] { return SystemSettings::instance().getBluetoothMIDI().autoConnect; },
+ListItem<InitialBTMode, 4> bootBTMIDIItem(
+    [] { return get(strings::bootBTMIDI); },
+    [] { return SystemSettings::instance().getBluetoothMIDI().initialMode; },
     [](UpdateContext&, auto m) {
-        SystemSettings::instance().getBluetoothMIDI().autoConnect = m;
+        SystemSettings::instance().getBluetoothMIDI().initialMode = m;
     },
-    [](auto m) { return getEnableDisableString(m); },
-    {false, true});
+    [](auto m) { return toString(m); },
+    {InitialBTMode::DISABLE,
+     InitialBTMode::_30SEC,
+     InitialBTMode::_60SEC,
+     InitialBTMode::ALWAYS});
 
-ListItem<bool, 2> autoBTAudioItem(
-    [] { return get(strings::autoBTAudio); },
-    [] { return SystemSettings::instance().getBluetoothAudio().autoConnect; },
+LabelItem btAudioMenuItem([] { return make3DotString(get(strings::BTAudio)); },
+                          [](UpdateContext& ctx) {
+                              if (auto* uiManager = ctx.getUIManager())
+                              {
+                                  uiManager->push(
+                                      std::make_shared<BTAudioWindow>());
+                              }
+                          });
+
+ListItem<InitialBTMode, 4> bootBTAudioItem(
+    [] { return get(strings::bootBTAudio); },
+    [] { return SystemSettings::instance().getBluetoothAudio().initialMode; },
     [](UpdateContext&, auto m) {
-        SystemSettings::instance().getBluetoothAudio().autoConnect = m;
+        SystemSettings::instance().getBluetoothAudio().initialMode = m;
     },
-    [](auto m) { return getEnableDisableString(m); },
-    {false, true});
+    [](auto m) { return toString(m); },
+    {InitialBTMode::DISABLE,
+     InitialBTMode::_30SEC,
+     InitialBTMode::_60SEC,
+     InitialBTMode::ALWAYS});
 
 } // namespace
 
@@ -318,10 +376,11 @@ SettingWindow::SettingWindow()
     append(&internalSpeakerItem);
     append(&playerDialModeItem);
     append(&dispOffReverseItem);
-    append(&autoBTAudioItem);
-    append(&autoBTMIDIItem);
+    append(&btAudioMenuItem);
+    append(&bootBTAudioItem);
+    append(&bootBTMIDIItem);
     append(&soundModuleItem);
-    append(&writeModuleIDItem);
+    append(&writeModuleMenuItem);
     append(&languageItem);
 }
 

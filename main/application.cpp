@@ -11,9 +11,11 @@
 #include <graphics/display.h>
 #include <graphics/font_data.h>
 #include <graphics/font_manager.h>
+#include <io/bt_a2dp_source_manager.h>
 #include <io/file_util.h>
 #include <memory>
 #include <music_player/music_player_manager.h>
+#include <sys/job_manager.h>
 #include <ui/context.h>
 #include <ui/key.h>
 #include <ui/system_setting.h>
@@ -31,6 +33,8 @@ namespace
 
 struct App
 {
+    sys::JobManager jobManagerHighPrio_;
+
     graphics::FontData fontAscii_;
     graphics::FontData fontKanji_;
 
@@ -38,6 +42,8 @@ struct App
     ui::KeyState keyState_;
 
     std::shared_ptr<ui::ControlBar> controlBar_;
+
+    io::BTA2DPSourceManager a2dpManager_;
 
 public:
     App()
@@ -50,6 +56,12 @@ public:
 
         fontAscii_.setData(fontAsciiBin.data());
         fontKanji_.setData(fontKanjiBin.data());
+
+        //
+        jobManagerHighPrio_.start(10, 2048, "JobManagerHP");
+
+        a2dpManager_.initialize(&jobManagerHighPrio_);
+        //        a2dpManager_.startDiscovery();
 
         //
         controlBar_ = std::make_shared<ui::ControlBar>();

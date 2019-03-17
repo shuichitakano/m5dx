@@ -25,4 +25,10 @@ SimpleListWindow::append(SimpleList::Item* item)
     list_.append(item);
 }
 
+void
+SimpleListWindow::clear()
+{
+    list_.clear();
+}
+
 } // namespace ui

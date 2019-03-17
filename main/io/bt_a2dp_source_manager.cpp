@@ -14,8 +14,10 @@
 #include <esp_bt_main.h>
 #include <esp_gap_bt_api.h>
 #include <math.h>
+#include <mutex>
 #include <string.h>
 #include <sys/job_manager.h>
+#include <sys/mutex.h>
 
 namespace io
 {
@@ -55,6 +57,9 @@ struct Impl : public audio::AudioOutDriver
 
     float volume_ = 1.0f;
 
+    sys::Mutex mutex_;
+    BTA2DPSourceManager::EntryContainer entries_;
+
 public:
     void onGAPEvent(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t* param)
     {
@@ -71,6 +76,11 @@ public:
                    p.bda[3],
                    p.bda[4],
                    p.bda[5]));
+
+            std::string name;
+            int rssi = -65536;
+            std::array<uint8_t, 6> addr;
+            memcpy(addr.data(), p.bda, 6);
 
             for (int i = 0; i < p.num_prop; i++)
             {
@@ -91,7 +101,7 @@ public:
                 }
                 case ESP_BT_GAP_DEV_PROP_RSSI:
                 {
-                    auto rssi = *(int8_t*)prop.val;
+                    rssi = *(int8_t*)prop.val;
                     DBOUT(("  RSSI: %d\n", rssi));
                     break;
                 }
@@ -108,22 +118,8 @@ public:
                             eir, ESP_BT_EIR_TYPE_SHORT_LOCAL_NAME, &l);
                     }
 
-                    DBOUT(("name length = %d\n", l));
-
-                    std::string name((char*)nameData, (char*)nameData + l);
+                    name = std::string((char*)nameData, (char*)nameData + l);
                     DBOUT(("  name: '%s'\n", name.c_str()));
-                    //                    if (name != "TaoTronics TT-BR06")
-                    //                    if (name != "JBL GO")
-                    if (name.empty())
-                    {
-                        return;
-                    }
-
-                    state_ = State::DISCOVERED;
-                    memcpy(addr_.data(), p.bda, 6);
-                    //                    deviceName_ = name;
-
-                    esp_bt_gap_cancel_discovery();
                     break;
                 }
 
@@ -132,6 +128,29 @@ public:
                     break;
                 }
             }
+
+            if (!name.empty())
+            {
+                std::lock_guard<sys::Mutex> lock(mutex_);
+                entries_.insert({name, rssi, addr});
+            }
+
+            if (0)
+            {
+                //                    if (name != "TaoTronics TT-BR06")
+                //                    if (name != "JBL GO")
+                if (name.empty())
+                {
+                    return;
+                }
+
+                state_ = State::DISCOVERED;
+                memcpy(addr_.data(), p.bda, 6);
+                //                    deviceName_ = name;
+
+                esp_bt_gap_cancel_discovery();
+            }
+
             break;
         }
 
@@ -537,12 +556,26 @@ BTA2DPSourceManager::initialize(sys::JobManager* jm)
 }
 
 void
-BTA2DPSourceManager::start()
+BTA2DPSourceManager::startDiscovery(int seconds)
 {
     DBOUT(("Starting device discovery...\n"));
+    pimpl_.entries_.clear();
     pimpl_.state_ = Impl::State::DISCOVERING;
     esp_bt_gap_set_scan_mode(ESP_BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE);
-    esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
+    int len = std::max(0x1, std::min(0x30, (seconds * 100 + 50) >> 7));
+    esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, len, 0);
+}
+
+sys::Mutex&
+BTA2DPSourceManager::getMutex()
+{
+    return pimpl_.mutex_;
+}
+
+const BTA2DPSourceManager::EntryContainer&
+BTA2DPSourceManager::getEntries() const
+{
+    return pimpl_.entries_;
 }
 
 BTA2DPSourceManager&
@@ -550,6 +583,22 @@ BTA2DPSourceManager::instance()
 {
     static BTA2DPSourceManager inst;
     return inst;
+}
+
+//
+bool
+operator<(const BTA2DPSourceManager::Entry& a,
+          const BTA2DPSourceManager::Entry& b)
+{
+    if (a.name != b.name)
+    {
+        return a.name < b.name;
+    }
+    if (a.rssi < b.rssi)
+    {
+        return a.rssi > b.rssi;
+    }
+    return a.addr < b.addr;
 }
 
 } // namespace io

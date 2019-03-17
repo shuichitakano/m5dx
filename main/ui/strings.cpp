@@ -33,8 +33,10 @@ constexpr Strings prev        = {"前へ", "PREV"};
 constexpr Strings next        = {"次へ", "NEXT"};
 constexpr Strings volUp       = {"大", "UP"};
 constexpr Strings volDown     = {"小", "DOWN"};
+constexpr Strings nothing     = {"なし", "NOTHING"};
 constexpr Strings enable      = {"有効", "ENABLE"};
 constexpr Strings disable     = {"無効", "DISABLE"};
+constexpr Strings always      = {"常時", "ALWAYS"};
 constexpr Strings yes         = {"はい", "YES"};
 constexpr Strings no          = {"いいえ", "NO"};
 constexpr Strings _auto       = {"自動", "AUTO"};
@@ -52,10 +54,13 @@ constexpr Strings dispOffReverse     = {"裏返し画面オフ",
 constexpr Strings trackOverride = {"MIDIオーバーライド", "MIDI OVERRIDE"};
 constexpr Strings playerDiadMode = {"プレイヤーダイアルモード",
                                     "PLAYER DIAL MODE"};
-constexpr Strings autoBTMIDI     = {"Bluetooth MIDI 自動接続",
-                                "AUTO CONNECT BT MIDI"};
-constexpr Strings autoBTAudio    = {"Bluetooth Audio 自動接続",
-                                 "AUTO CONNECT BT AUDIO"};
+
+constexpr Strings bootBTMIDI  = {"起動時 Bluetooth MIDI 待ち受け",
+                                "STARTUP BT MIDI CONNECTION MODE"};
+constexpr Strings bootBTAudio = {"起動時 Bluetooth Audio 待ち受け",
+                                 "STARTUP BT AUDIO CONNECTION MODE"};
+constexpr Strings _30sec      = {"30秒", "30 SEC"};
+constexpr Strings _60sec      = {"60秒", "60 SEC"};
 
 constexpr Strings language = {"Language", "LANGUAGE"};
 constexpr Strings japanese = {"日本語", "JAPANESE"};

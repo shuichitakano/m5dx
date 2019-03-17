@@ -76,6 +76,7 @@ public:
     const Widget* getWidget(size_t i) const override;
     Widget* getWidget(size_t i) override;
 
+    void clear();
     void append(Item* item);
     Item* getItem(size_t i) { return items_[i]; }
 

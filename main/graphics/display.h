@@ -16,6 +16,7 @@ class Display final : public FrameBufferBase
 {
 public:
     bool initialize();
+    void setBackLightIntensity(int v);
 
     void setWindow(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
     uint32_t getLeft() const override;

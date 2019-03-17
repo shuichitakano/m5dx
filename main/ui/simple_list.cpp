@@ -65,6 +65,12 @@ SimpleList::append(Item* item)
     items_.push_back(item);
 }
 
+void
+SimpleList::clear()
+{
+    items_.clear();
+}
+
 /////////
 
 Dim2

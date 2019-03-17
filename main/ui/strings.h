@@ -31,8 +31,10 @@ extern const Strings prev;
 extern const Strings next;
 extern const Strings volUp;
 extern const Strings volDown;
+extern const Strings nothing;
 extern const Strings enable;
 extern const Strings disable;
+extern const Strings always;
 extern const Strings yes;
 extern const Strings no;
 extern const Strings _auto;
@@ -47,8 +49,11 @@ extern const Strings backLightIntensity;
 extern const Strings dispOffReverse;
 extern const Strings trackOverride;
 extern const Strings playerDiadMode;
-extern const Strings autoBTMIDI;
-extern const Strings autoBTAudio;
+
+extern const Strings bootBTMIDI;
+extern const Strings bootBTAudio;
+extern const Strings _30sec;
+extern const Strings _60sec;
 
 extern const Strings language;
 extern const Strings japanese;

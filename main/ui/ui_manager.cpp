@@ -33,7 +33,7 @@ UIManager::push(const WidgetPtr& p)
 void
 UIManager::pop()
 {
-    popReq_ = true;
+    ++popReq_;
 }
 
 void
@@ -71,8 +71,8 @@ UIManager::update(UpdateContext& ctx)
 
     if (popReq_)
     {
-        layer_.pop_back();
-        popReq_  = false;
+        layer_.resize(layer_.size() - popReq_);
+        popReq_  = 0;
         refresh_ = true;
         checkRenderStartLV();
     }

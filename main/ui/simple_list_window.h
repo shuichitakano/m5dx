@@ -19,6 +19,7 @@ public:
     SimpleListWindow();
 
     void append(SimpleList::Item* item);
+    void clear();
 
 protected:
     SimpleList& getList() { return list_; }

@@ -60,6 +60,7 @@ public:
     InternalSpeakerOut()
     {
         i2s_config_t cfg{};
+#if 1
         cfg.mode =
             (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN);
         cfg.sample_rate          = getSampleRate() << overSampleShift_;
@@ -75,6 +76,35 @@ public:
         assert(r == ESP_OK);
 
         i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN);
+#else
+        // パルス駆動実験
+        // 25ピンをGPIOににするとか、dac_output_disableしないと出力されない
+        cfg.mode            = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX);
+        cfg.sample_rate     = getSampleRate() << overSampleShift_;
+        cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+        cfg.channel_format  = I2S_CHANNEL_FMT_RIGHT_LEFT;
+        cfg.communication_format =
+            i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB);
+        cfg.intr_alloc_flags = 0;
+        cfg.dma_buf_count    = 2;
+        cfg.dma_buf_len      = 128 << overSampleShift_;
+        cfg.use_apll         = false;
+
+        auto r = i2s_driver_install(port_, &cfg, 0, nullptr);
+        assert(r == ESP_OK);
+
+        {
+            i2s_pin_config_t cfg{};
+            cfg.bck_io_num   = I2S_PIN_NO_CHANGE;
+            cfg.ws_io_num    = I2S_PIN_NO_CHANGE;
+            cfg.data_out_num = 25;
+            cfg.data_in_num  = I2S_PIN_NO_CHANGE;
+
+            auto r = i2s_set_pin(port_, &cfg);
+            assert(r == ESP_OK);
+        }
+
+#endif
         writeZero();
     }
 
@@ -86,7 +116,8 @@ public:
 
     void writeZero()
     {
-        for (int i = 0; i < 128 * 4; ++i)
+        auto n = 128 * 2 << overSampleShift_;
+        for (int i = 0; i < n; ++i)
         {
             uint16_t zero[] = {0, 0};
             write(zero, 1);
