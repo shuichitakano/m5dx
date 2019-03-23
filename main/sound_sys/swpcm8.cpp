@@ -72,8 +72,9 @@ SWPCM8::play(int ch, const void* addr, int len, Type type)
     auto& v      = voices_[ch];
     v.nextType   = type;
     v.nextPosEnd = len;
-    v.nextSample = static_cast<const uint8_t*>(addr);
-    v.pause      = false;
+    v.nextSample.store(static_cast<const uint8_t*>(addr),
+                       std::memory_order_release);
+    v.pause = false;
     nextKeyOff_ &= ~(1 << ch);
 }
 
@@ -98,22 +99,22 @@ void SWPCM8::accumSamples(std::array<int32_t, 2>* buffer, uint32_t samples)
         auto& v = voices_[ch];
         if (v.mute || nextKeyOff & (1 << ch))
         {
-            v.keyon      = false;
-            v.nextSample = 0;
+            v.keyon = false;
+            v.nextSample.store(nullptr, std::memory_order_release);
             continue;
         }
-        if (v.nextSample)
+        if (auto nextSample = v.nextSample.load(std::memory_order_acquire))
         {
             v.type   = v.nextType;
             v.keyon  = true;
             v.pos    = -1;
             v.posEnd = v.nextPosEnd;
-            v.sample = v.nextSample;
+            v.sample = nextSample;
             v.frac   = 0xffffff;
             v.prev   = 0;
             v.val    = 0;
             v.coder.reset();
-            v.nextSample = 0;
+            v.nextSample.store(nullptr, std::memory_order_release);
 
             keyOnTrigger_ |= 1 << ch;
         }
