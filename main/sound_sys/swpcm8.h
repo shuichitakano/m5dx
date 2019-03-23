@@ -7,6 +7,7 @@
 
 #include "m6258_coder.h"
 #include "sound_system.h"
+#include <atomic>
 #include <audio/sample_generator.h>
 #include <stdint.h>
 
@@ -71,7 +72,7 @@ private:
         int32_t prev;
 
         uint32_t nextPosEnd;
-        const uint8_t* nextSample;
+        std::atomic<const uint8_t*> nextSample;
 
         M6258Coder coder;
     };
