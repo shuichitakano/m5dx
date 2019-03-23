@@ -47,8 +47,8 @@ decodeYM3012Sample(int16_t* dst, const uint32_t* src, size_t count)
         // LSB側がCH0
         auto s  = *src;
         auto rs = reverseBit16_16(s);
-        dst[0]  = decode(rs & 0xffff);
-        dst[1]  = decode(rs >> 16);
+        dst[0]  = decode(rs >> 16);
+        dst[1]  = decode(rs & 0xffff);
 
         src += 1;
         dst += 2;
