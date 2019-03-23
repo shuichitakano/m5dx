@@ -33,7 +33,7 @@ class UIManager
 public:
     void push(const WidgetPtr& p, Vec2 pos);
     void push(const WidgetPtr& p);
-    void pop();
+    void pop(int n = 1);
 
     void update(UpdateContext& ctx);
     void render(RenderContext& ctx);

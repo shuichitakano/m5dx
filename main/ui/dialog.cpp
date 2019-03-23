@@ -80,6 +80,11 @@ Dialog::Client::onUpdate(UpdateContext& ctx)
             ctx.popManagedUI();
         }
     }
+
+    if (updateFunc_)
+    {
+        updateFunc_(ctx);
+    }
 }
 
 void

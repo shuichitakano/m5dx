@@ -131,7 +131,7 @@ public:
     }
 
     UIManager* getUIManager() { return uiManager_; }
-    void popManagedUI();
+    void popManagedUI(int n = 1);
 
     void setKeyState(KeyState* ks) { keyState_ = ks; }
     const KeyState* getKeyState() const

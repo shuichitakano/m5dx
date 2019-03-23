@@ -19,6 +19,7 @@ public:
     SimpleListWindow();
 
     void append(SimpleList::Item* item);
+    void appendCancel(const char* str = nullptr);
     void clear();
 
 protected:

@@ -22,10 +22,12 @@ extern const Strings selectSong;
 extern const Strings volumeAdj;
 extern const Strings settings;
 extern const Strings select;
+extern const Strings close;
 extern const Strings play;
 extern const Strings stop;
 extern const Strings up;
 extern const Strings down;
+extern const Strings cancel;
 extern const Strings back;
 extern const Strings prev;
 extern const Strings next;
@@ -68,6 +70,7 @@ extern const Strings writeModuleID;
 extern const Strings writeModuleMes;
 
 extern const Strings BTAudio;
+extern const Strings BTAudioConnectMes;
 extern const Strings BTMIDI;
 
 } // namespace strings

@@ -46,7 +46,8 @@ struct Impl : public audio::AudioOutDriver
     State state_{};
     MediaState mediaState_{};
 
-    std::array<uint8_t, 6> addr_;
+    using Addr = BTA2DPSourceManager::Addr;
+    Addr addr_;
     //    std::string deviceName_;
 
     sys::JobManager* jobManager_{};
@@ -61,8 +62,17 @@ struct Impl : public audio::AudioOutDriver
     BTA2DPSourceManager::EntryContainer entries_;
 
 public:
+    void connect()
+    {
+        DBOUT(("connecting to peer\n"));
+        state_ = State::CONNECTING;
+        esp_a2d_source_connect(addr_.data());
+    }
+
     void onGAPEvent(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t* param)
     {
+        std::lock_guard<sys::Mutex> lock(mutex_);
+
         switch (event)
         {
 
@@ -162,9 +172,7 @@ public:
                 DBOUT(("Device discovery stopped.\n"));
                 if (state_ == State::DISCOVERED)
                 {
-                    state_ = State::CONNECTING;
-                    DBOUT(("connecting to peer\n"));
-                    esp_a2d_source_connect(addr_.data());
+                    connect();
                 }
                 else if (state_ == State::DISCOVERING)
                 {
@@ -344,6 +352,8 @@ public:
 
     void onA2DPEvent(esp_a2d_cb_event_t event, const esp_a2d_cb_param_t* param)
     {
+        std::lock_guard<sys::Mutex> lock(mutex_);
+
         DBOUT(("onA2DPEvent: state %d, mediaState %d, ev %d\n",
                (int)state_,
                (int)mediaState_,
@@ -558,12 +568,65 @@ BTA2DPSourceManager::initialize(sys::JobManager* jm)
 void
 BTA2DPSourceManager::startDiscovery(int seconds)
 {
+    std::lock_guard<sys::Mutex> lock(getMutex());
+
     DBOUT(("Starting device discovery...\n"));
     pimpl_.entries_.clear();
     pimpl_.state_ = Impl::State::DISCOVERING;
     esp_bt_gap_set_scan_mode(ESP_BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE);
     int len = std::max(0x1, std::min(0x30, (seconds * 100 + 50) >> 7));
     esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, len, 0);
+}
+
+void
+BTA2DPSourceManager::stopDiscovery()
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+
+    if (pimpl_.state_ == Impl::State::DISCOVERING)
+    {
+        DBOUT(("Stop device discovery...\n"));
+        pimpl_.state_ = Impl::State::IDLE;
+        esp_bt_gap_cancel_discovery();
+    }
+}
+
+void
+BTA2DPSourceManager::connect(const Addr& addr)
+{
+    std::lock_guard<sys::Mutex> lock(getMutex());
+
+    DBOUT(("Connecting A2DP...\n"));
+    pimpl_.addr_ = addr;
+
+    if (pimpl_.state_ == Impl::State::DISCOVERING)
+    {
+        pimpl_.state_ = Impl::State::DISCOVERED;
+        esp_bt_gap_cancel_discovery();
+    }
+    else
+    {
+        pimpl_.connect();
+    }
+}
+
+void
+BTA2DPSourceManager::cancelConnect()
+{
+    DBOUT(("cancel connect"));
+    // といってもできることはない？？
+}
+
+bool
+BTA2DPSourceManager::isDiscovering() const
+{
+    return pimpl_.state_ == Impl::State::DISCOVERING;
+}
+
+bool
+BTA2DPSourceManager::isConnected() const
+{
+    return pimpl_.state_ == Impl::State::CONNECTED;
 }
 
 sys::Mutex&

@@ -5,6 +5,7 @@
 
 #include "simple_list.h"
 #include "context.h"
+#include "strings.h"
 #include "window_setting.h"
 
 namespace ui
@@ -27,6 +28,15 @@ constexpr uint32_t valueTextColor_ = 0xffffff;
 SimpleList::SimpleList()
 {
     setDirectionIsVertical(true);
+
+    setLongPressFunc([](UpdateContext& ctx, int) { ctx.popManagedUI(); });
+    setDecideFunc([this](UpdateContext& ctx, int i) {
+        if (cancelIdx_ == i)
+        {
+            ctx.popManagedUI();
+        }
+        getItem(i)->decide(ctx);
+    });
 }
 
 Dim2
@@ -69,6 +79,18 @@ void
 SimpleList::clear()
 {
     items_.clear();
+    cancelIdx_ = -1;
+}
+
+void
+SimpleList::appendCancel(const char* str)
+{
+    if (cancelIdx_ < 0)
+    {
+        cancelItem_.setText(str ? str : get(strings::close));
+        cancelIdx_ = items_.size();
+        append(&cancelItem_);
+    }
 }
 
 /////////

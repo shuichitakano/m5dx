@@ -36,9 +36,17 @@ public:
                      const Func& setFunc,
                      const ToString& toString,
                      const std::array<T, N>& values,
-                     bool closeOnDecide = true)
+                     bool closeOnDecide = true,
+                     bool useCancel     = false)
     {
         setTitle(title);
+
+        int ofs = 0;
+        if (useCancel)
+        {
+            getList().appendCancel();
+            ofs = 1;
+        }
 
         for (size_t i = 0; i < N; ++i)
         {
@@ -46,14 +54,18 @@ public:
             append(&items_[i]);
             if (values[i] == current)
             {
-                getList().setIndex(i);
+                getList().setIndex(i + ofs);
             }
         }
 
         getList().setDecideFunc([=](UpdateContext& ctx, int i) {
-            if (i >= 0 && i < N)
+            if (i == getList().getCancelIndex())
             {
-                setFunc(ctx, values[i]);
+                ctx.popManagedUI();
+            }
+            if (i >= ofs && i < N + ofs)
+            {
+                setFunc(ctx, values[i - ofs]);
                 if (closeOnDecide)
                 {
                     ctx.popManagedUI();
@@ -254,7 +266,8 @@ auto makeWriteModuleListWindow = [] {
         [](UpdateContext& ctx, SoundModule v) { writeModuleID(ctx, v); },
         [](SoundModule v) { return toString(v); },
         {SoundModule::YM2151, SoundModule::YMF288},
-        false);
+        false /* close */,
+        true /* cancel */);
 };
 
 std::string
@@ -369,6 +382,7 @@ ListItem<InitialBTMode, 4> bootBTAudioItem(
 
 SettingWindow::SettingWindow()
 {
+    appendCancel();
     append(&loopCountItem);
     append(&shuffleModeItem);
     append(&repeatModeItem);
