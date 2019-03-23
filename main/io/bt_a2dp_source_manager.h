@@ -22,11 +22,13 @@ namespace io
 class BTA2DPSourceManager
 {
 public:
+    using Addr = std::array<uint8_t, 6>;
+
     struct Entry
     {
         std::string name;
         int rssi{};
-        std::array<uint8_t, 6> addr;
+        Addr addr;
 
         friend bool operator<(const Entry& a, const Entry& b);
     };
@@ -35,7 +37,15 @@ public:
 
 public:
     void initialize(sys::JobManager* jm);
+
     void startDiscovery(int seconds);
+    void stopDiscovery();
+
+    void connect(const Addr& addr);
+    void cancelConnect();
+
+    bool isDiscovering() const;
+    bool isConnected() const;
 
     sys::Mutex& getMutex();
     const EntryContainer& getEntries() const;

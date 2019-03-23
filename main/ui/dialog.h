@@ -33,6 +33,8 @@ class Dialog : public Window
         bool needRefresh_       = true;
         bool needRefreshButton_ = true;
 
+        Func updateFunc_;
+
     public:
         Dim2 getSize() const override { return size_; }
         void onUpdate(UpdateContext& ctx) override;
@@ -47,6 +49,8 @@ public:
 
     void setMessage(const std::string& str);
     void appendButton(const std::string& str, const Func& action = {});
+
+    void setUpdateFunction(const Func& f) { client_.updateFunc_ = f; }
 };
 
 } // namespace ui

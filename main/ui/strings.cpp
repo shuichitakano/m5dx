@@ -24,10 +24,12 @@ constexpr Strings selectSong  = {"曲選択", "SELECT SONG"};
 constexpr Strings volumeAdj   = {"音量調整", "VOLUME"};
 constexpr Strings settings    = {"設定", "SETTINGS"};
 constexpr Strings select      = {"選択", "SELECT"};
+constexpr Strings close       = {"閉じる", "CLOSE"};
 constexpr Strings play        = {"再生", "PLAY"};
 constexpr Strings stop        = {"停止", "STOP"};
 constexpr Strings up          = {"↑", "↑"};
 constexpr Strings down        = {"↓", "↓"};
+constexpr Strings cancel      = {"キャンセル", "CANCEL"};
 constexpr Strings back        = {"戻る", "BACK"};
 constexpr Strings prev        = {"前へ", "PREV"};
 constexpr Strings next        = {"次へ", "NEXT"};
@@ -76,8 +78,11 @@ constexpr Strings writeModuleMes = {
     "EEPROMにモジュールID(%s)を書き込みます\n本当によろしいですか?",
     "Write module ID(%s) to EEPROM\nAre you sure?"};
 
-constexpr Strings BTAudio = {"Bluetooth Audio", "BT AUDIO"};
-constexpr Strings BTMIDI  = {"Bluetooth MIDI", "BT MIDI"};
+constexpr Strings BTAudio           = {"Bluetooth Audio", "BT AUDIO"};
+constexpr Strings BTAudioConnectMes = {"'%s' に接続しています...",
+                                       "Connecting to '%s'..."};
+
+constexpr Strings BTMIDI = {"Bluetooth MIDI", "BT MIDI"};
 
 } // namespace strings
 

@@ -26,12 +26,15 @@ class BTAudioWindow final : public SimpleListWindow
 
         std::string getTitle() const override { return name_; }
         void _render(RenderContext& ctx) override;
+        void decide(UpdateContext& ctx) override;
     };
 
     std::vector<Item> items_;
 
 public:
     BTAudioWindow();
+    ~BTAudioWindow() override;
+
     void onUpdate(UpdateContext& ctx) override;
 };
 

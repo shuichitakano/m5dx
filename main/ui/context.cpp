@@ -32,11 +32,11 @@ UpdateContext::acceptLongPress()
 }
 
 void
-UpdateContext::popManagedUI()
+UpdateContext::popManagedUI(int n)
 {
     if (uiManager_)
     {
-        uiManager_->pop();
+        uiManager_->pop(n);
     }
 }
 

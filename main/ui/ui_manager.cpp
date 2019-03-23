@@ -31,9 +31,9 @@ UIManager::push(const WidgetPtr& p)
 }
 
 void
-UIManager::pop()
+UIManager::pop(int n)
 {
-    ++popReq_;
+    popReq_ += n;
 }
 
 void

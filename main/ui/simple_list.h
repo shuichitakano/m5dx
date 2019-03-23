@@ -80,8 +80,14 @@ public:
     void append(Item* item);
     Item* getItem(size_t i) { return items_[i]; }
 
+    void appendCancel(const char* str = nullptr);
+    int getCancelIndex() const { return cancelIdx_; }
+
 private:
     std::vector<Item*> items_;
+
+    TextItem cancelItem_;
+    int cancelIdx_ = -1;
 };
 
 } // namespace ui

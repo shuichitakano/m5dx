@@ -67,6 +67,7 @@ JobManager::add(Job&& f)
     jobs_.push_back(std::move(f));
 
     xEventGroupSetBits(eventGroupHandle_, EVENT_ADD_JOB);
+    xEventGroupClearBits(eventGroupHandle_, EVENT_IDLE);
 }
 
 void
@@ -96,7 +97,6 @@ JobManager::task()
                                 pdTRUE /* clear */,
                                 pdFALSE /* wait for all bit */,
                                 portMAX_DELAY);
-            xEventGroupClearBits(eventGroupHandle_, EVENT_IDLE);
 
             mutex_.lock();
         }
