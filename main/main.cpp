@@ -22,13 +22,16 @@
 #include "application.h"
 #include "m5dx_module.h"
 
-#include <sys/timer.h>
+#include <system/timer.h>
 
 #include "debug.h"
 
 #undef min
 #include <io/bt_a2dp_source_manager.h>
-#include <sys/job_manager.h>
+#include <system/job_manager.h>
+
+#include <graphics/bmp.h>
+#include <util/binary.h>
 
 #define M5STACK_FIRE_NEO_NUM_LEDS 10
 #define M5STACK_FIRE_NEO_DATA_PIN 15
@@ -41,6 +44,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
+
+DEF_LINKED_BINARY(stmdx_material_bmp);
 
 constexpr uint16_t
 makeColor(int r, int g, int b)
@@ -114,6 +119,14 @@ setup()
 
     auto moduleID = M5DX::readModuleID();
     DBOUT(("module id = %d\n", (int)moduleID));
+
+    //
+    auto bmp = GET_LINKED_BINARY_T(graphics::BMP, stmdx_material_bmp);
+    DBOUT(("bmp = %p, bits = %p, (%dx%d)\n",
+           bmp,
+           bmp->getBits(),
+           bmp->getWidth(),
+           bmp->getHeight()));
 
     // bt
 

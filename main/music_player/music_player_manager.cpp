@@ -10,7 +10,7 @@
 #include <music_player/mdxplayer.h>
 #include <mutex>
 #include <string>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 #include <ui/system_setting.h>
 
 namespace music_player

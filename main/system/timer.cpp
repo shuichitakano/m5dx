@@ -11,7 +11,7 @@
 #include <music_player/music_player_manager.h>
 #include <mutex>
 #include <soc/timer_group_struct.h>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>

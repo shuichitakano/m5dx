@@ -8,7 +8,7 @@
 #include "mxdrv.h"
 #include "sys.h"
 #include <stdint.h>
-#include <sys/timer.h>
+#include <system/timer.h>
 
 MXDRVSoundSystemSet mxdrvSoundSystemSet_;
 

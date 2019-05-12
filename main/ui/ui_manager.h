@@ -8,7 +8,7 @@
 #include "widget.h"
 #include <memory>
 #include <stdint.h>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 #include <vector>
 
 namespace ui
