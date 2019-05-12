@@ -12,7 +12,7 @@
 #include <debug.h>
 #include <io/bt_a2dp_source_manager.h>
 #include <mutex>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 
 namespace ui
 {

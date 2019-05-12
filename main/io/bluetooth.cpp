@@ -10,7 +10,7 @@
 #include <esp_bt_device.h>
 #include <esp_bt_main.h>
 #include <esp_gap_bt_api.h>
-#include <sys/nvs.h>
+#include <system/nvs.h>
 #include <vector>
 
 namespace io

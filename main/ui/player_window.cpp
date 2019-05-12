@@ -16,7 +16,7 @@
 #include <audio/audio_out.h>
 #include <music_player/music_player_manager.h>
 #include <mutex>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 
 namespace ui
 {

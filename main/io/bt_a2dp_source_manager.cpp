@@ -16,8 +16,8 @@
 #include <math.h>
 #include <mutex>
 #include <string.h>
-#include <sys/job_manager.h>
-#include <sys/mutex.h>
+#include <system/job_manager.h>
+#include <system/mutex.h>
 
 namespace io
 {
@@ -376,7 +376,8 @@ public:
                        addr_[5]));
                 state_      = State::CONNECTED;
                 mediaState_ = MediaState::IDLE;
-                esp_bt_gap_set_scan_mode(ESP_BT_SCAN_MODE_NONE);
+                esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE,
+                                         ESP_BT_NON_DISCOVERABLE);
                 esp_bt_gap_cancel_discovery();
 
                 audio::AudioOutDriverManager::instance().setDriver(this);
@@ -385,8 +386,8 @@ public:
             {
                 DBOUT(("a2dp disconnected\n"));
                 state_ = State::UNCONNECTED;
-                esp_bt_gap_set_scan_mode(
-                    ESP_BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE);
+                esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE,
+                                         ESP_BT_GENERAL_DISCOVERABLE);
                 // discoverに戻ってもいいんじゃ？
 
                 audio::AudioOutDriverManager::instance().setDriver(nullptr);
@@ -573,7 +574,7 @@ BTA2DPSourceManager::startDiscovery(int seconds)
     DBOUT(("Starting device discovery...\n"));
     pimpl_.entries_.clear();
     pimpl_.state_ = Impl::State::DISCOVERING;
-    esp_bt_gap_set_scan_mode(ESP_BT_SCAN_MODE_CONNECTABLE_DISCOVERABLE);
+    esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
     int len = std::max(0x1, std::min(0x30, (seconds * 100 + 50) >> 7));
     esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, len, 0);
 }

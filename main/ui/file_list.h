@@ -8,7 +8,7 @@
 #include "scroll_list.h"
 #include <music_player/file_format.h>
 #include <string>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 #include <utility>
 #include <vector>
 

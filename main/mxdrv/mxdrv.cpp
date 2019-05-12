@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/timer.h>
+#include <system/timer.h>
 
 //#include <mmsystem.h>
 
@@ -292,7 +292,7 @@ MXDRV_Start(void* mdxbuf_ptr,
                                                                         }
                                                                 }
                                                           
-
+                                                    
                                                                 if ( opmmode > 1 ) opmmode = 0;
                                                                 if ( opmmode < 0 ) opmmode = 0;
                                                     

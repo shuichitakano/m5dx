@@ -4,7 +4,7 @@
 #include "sound_iocs.h"
 #include "x68sound.h"
 
-#include <sys/timer.h>
+#include <system/timer.h>
 
 #include "sys.h"
 

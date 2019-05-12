@@ -12,7 +12,7 @@
 #include <freertos/task.h>
 #include <mutex>
 #include <string.h>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 #include <util/simple_ring_buffer.h>
 
 namespace audio

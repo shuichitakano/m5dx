@@ -7,7 +7,7 @@
 
 #include <array>
 #include <stdint.h>
-#include <sys/mutex.h>
+#include <system/mutex.h>
 #include <vector>
 
 namespace audio

@@ -4,35 +4,40 @@
  */
 
 #include "util.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/portmacro.h>
 #include <esp_timer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+#include <freertos/task.h>
 
 namespace sys
 {
 
-void yield()
+void
+yield()
 {
     vPortYield();
 }
 
-uint32_t IRAM_ATTR micros()
+uint32_t IRAM_ATTR
+micros()
 {
     return (uint32_t)esp_timer_get_time();
 }
 
-uint32_t IRAM_ATTR millis()
+uint32_t IRAM_ATTR
+millis()
 {
     return micros() / 1000;
 }
 
-void delay(uint32_t ms)
+void
+delay(uint32_t ms)
 {
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-void IRAM_ATTR delayMicroseconds(uint32_t us)
+void IRAM_ATTR
+delayMicroseconds(uint32_t us)
 {
     if (us)
     {
