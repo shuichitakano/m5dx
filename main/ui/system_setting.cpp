@@ -7,6 +7,7 @@
 #include "strings.h"
 #include <algorithm>
 
+#include <audio/audio.h>
 #include <graphics/display.h>
 
 namespace ui
@@ -154,6 +155,22 @@ toString(PlayerDialMode m)
 }
 
 const char*
+toString(DeltaSigmaMode m)
+{
+    switch (m)
+    {
+    case DeltaSigmaMode::ORDER_1ST:
+        return get(strings::_1stOrder);
+
+    case DeltaSigmaMode::ORDER_3RD:
+        return get(strings::_3rdOrder);
+
+    default:
+        return "Unknown";
+    }
+}
+
+const char*
 toString(InitialBTMode m)
 {
     switch (m)
@@ -181,6 +198,13 @@ SystemSettings::applyBackLightIntensity() const
 {
     graphics::getDisplay().setBackLightIntensity(backLightIntensity_ * 255 /
                                                  100);
+}
+
+void
+SystemSettings::applyDeltaSigmaMode() const
+{
+    audio::setInternalSpeaker3rdDeltaSigmaMode(deltaSigmaMode_ ==
+                                               DeltaSigmaMode::ORDER_3RD);
 }
 
 } // namespace ui

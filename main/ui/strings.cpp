@@ -49,6 +49,7 @@ constexpr Strings trackMask   = {"トラックマスク", "TRACK MASK"};
 constexpr Strings trackSelect = {"トラック選択", "TRACK SELECT"};
 
 constexpr Strings internalSpeaker = {"内蔵スピーカー", "INTERNAL SPEAKER"};
+constexpr Strings deltaSigmaMode     = {"ΔΣモード", "DELTA SIGMA MODE"};
 constexpr Strings backLightIntensity = {"バックライト輝度",
                                         "BACKLIGHT INTENSITY"};
 constexpr Strings dispOffReverse     = {"裏返し画面オフ",
@@ -63,6 +64,8 @@ constexpr Strings bootBTAudio = {"起動時 Bluetooth Audio 待ち受け",
                                  "STARTUP BT AUDIO CONNECTION MODE"};
 constexpr Strings _30sec      = {"30秒", "30 SEC"};
 constexpr Strings _60sec      = {"60秒", "60 SEC"};
+constexpr Strings _1stOrder   = {"一次", "1ST ORDER"};
+constexpr Strings _3rdOrder   = {"三次", "3RD ORDER"};
 
 constexpr Strings language = {"Language", "LANGUAGE"};
 constexpr Strings japanese = {"日本語", "JAPANESE"};

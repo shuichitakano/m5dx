@@ -58,6 +58,12 @@ struct Dim2
     uint32_t w, h;
 };
 
+struct Rect
+{
+    Vec2 pos;
+    Dim2 size;
+};
+
 struct BBox
 {
     Vec2 p[2];
@@ -103,6 +109,14 @@ public:
         p[0].y = std::min(p[0].y, b.p[0].y);
         p[1].x = std::max(p[1].x, b.p[1].x);
         p[1].y = std::max(p[1].y, b.p[1].y);
+    }
+
+    void update(const Rect& r)
+    {
+        p[0].x = std::min(p[0].x, r.pos.x);
+        p[0].y = std::min(p[0].y, r.pos.y);
+        p[1].x = std::max<int>(p[1].x, r.pos.x + r.size.w);
+        p[1].y = std::max<int>(p[1].y, r.pos.y + r.size.h);
     }
 
     bool isIntersect(const BBox& t) const

@@ -423,7 +423,7 @@ MDXPlayer::getTrackCount() const
 int
 MDXPlayer::getCurrentTrack() const
 {
-    return 0;
+    return -1;
 }
 
 std::experimental::optional<std::string>

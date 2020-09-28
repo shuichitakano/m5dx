@@ -8,22 +8,30 @@
 #include "debug.h"
 #include "target.h"
 #include <audio/audio_out.h>
+#include <graphics/bmp.h>
 #include <graphics/display.h>
 #include <graphics/font_data.h>
 #include <graphics/font_manager.h>
+#include <graphics/texture.h>
 #include <io/bt_a2dp_source_manager.h>
 #include <io/file_util.h>
 #include <memory>
 #include <music_player/music_player_manager.h>
 #include <system/job_manager.h>
+#include <system/util.h>
 #include <ui/context.h>
 #include <ui/key.h>
 #include <ui/system_setting.h>
 #include <ui/ui_manager.h>
+#include <util/binary.h>
 #include <wire.h>
 
 #include <ui/control_bar.h>
 #include <ui/player_window.h>
+
+DEF_LINKED_BINARY(m5dx_material_bmp);
+DEF_LINKED_BINARY(_4x8_font_bin);
+DEF_LINKED_BINARY(misaki_font_bin);
 
 namespace M5DX
 {
@@ -37,6 +45,7 @@ struct App
 
     graphics::FontData fontAscii_;
     graphics::FontData fontKanji_;
+    graphics::Texture texture_;
 
     ui::UIManager uiManager_;
     ui::KeyState keyState_;
@@ -45,9 +54,12 @@ struct App
 
     io::BTA2DPSourceManager a2dpManager_;
 
+    uint32_t currentTimer_ = 0;
+
 public:
     App()
     {
+#if 0
         // todo: フォントはコード埋め込みに変更する
         static std::vector<uint8_t> fontAsciiBin;
         static std::vector<uint8_t> fontKanjiBin;
@@ -56,6 +68,13 @@ public:
 
         fontAscii_.setData(fontAsciiBin.data());
         fontKanji_.setData(fontKanjiBin.data());
+#else
+        fontAscii_.setData(GET_LINKED_BINARY(_4x8_font_bin));
+        fontKanji_.setData(GET_LINKED_BINARY(misaki_font_bin));
+#endif
+
+        texture_.initialize(
+            GET_LINKED_BINARY_T(graphics::BMP, m5dx_material_bmp));
 
         //
         jobManagerHighPrio_.start(10, 2048, "JobManagerHP");
@@ -66,11 +85,17 @@ public:
         //
         controlBar_ = std::make_shared<ui::ControlBar>();
         uiManager_.push(controlBar_, {0, 232});
-        uiManager_.push(std::make_shared<ui::PlayerWindow>());
+        std::make_shared<ui::PlayerWindow>()->show(uiManager_);
+
+        currentTimer_ = sys::millis();
     }
 
     void tick()
     {
+        uint32_t time = millis();
+        float dt      = (time - currentTimer_) * 0.001f;
+        currentTimer_ = time;
+
         music_player::tickMusicPlayerManager();
 
         {
@@ -92,7 +117,8 @@ public:
                              trigger,
                              dial);
 
-            ui::UpdateContext ctx(&uiManager_, &keyState_, controlBar_.get());
+            ui::UpdateContext ctx(
+                dt, &uiManager_, &keyState_, controlBar_.get());
             uiManager_.update(ctx);
         }
         {
@@ -105,6 +131,7 @@ public:
         {
             ui::RenderContext ctx;
             ctx.setFrameBuffer(&graphics::getDisplay());
+            ctx.setTexture(&texture_);
             auto& fm = ctx.getFontManager();
             fm.setAsciiFontData(&fontAscii_);
             fm.setKanjiFontData(&fontKanji_);
@@ -127,9 +154,9 @@ public:
         fm.setEdgedMode(false);
         fm.setTransparentMode(false);
 
-        char str[20];
-        sprintf(str, "F %d", counter);
-        ctx.putText(str, {0, 0}, {320, 240}, ui::TextAlignH::RIGHT);
+        // char str[20];
+        // sprintf(str, "F %d", counter);
+        // ctx.putText(str, {0, 0}, {320, 240}, ui::TextAlignH::RIGHT);
 #endif
     }
 

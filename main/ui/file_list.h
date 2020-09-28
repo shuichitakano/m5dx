@@ -15,7 +15,7 @@
 namespace ui
 {
 
-class FileList : public ScrollList
+class FileList final : public ScrollList
 {
     using super = ScrollList;
 

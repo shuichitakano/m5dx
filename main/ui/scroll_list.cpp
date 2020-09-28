@@ -23,19 +23,21 @@ ScrollList::ScrollList()
 void
 ScrollList::touchSelectWidget()
 {
-    auto w = getWidget(selectIndex_);
-    if (w)
+    if (selectIndex_ >= 0)
     {
-        w->touch();
+        auto w = getWidget(selectIndex_);
+        if (w)
+        {
+            w->touch();
+        }
     }
 }
 
 void
 ScrollList::setIndex(int i)
 {
-    DBOUT(("setIndex(%d)\n", i));
     std::lock_guard<sys::Mutex> lock(getMutex());
-    if (i >= 0 && i < getWidgetCount())
+    if (i >= -1 && i < static_cast<int>(getWidgetCount()))
     {
         touchSelectWidget();
         selectIndex_ = i;
@@ -88,16 +90,21 @@ ScrollList::onUpdate(UpdateContext& ctx)
     {
         ctx.disableInput();
 
-        if (auto* bt = ctx.getButtonTip())
+        if (enableButton_)
         {
-            bt->set(0, get(strings::up));
-            bt->set(1, decideText_);
-            bt->set(2, get(strings::down));
+            if (auto* bt = ctx.getButtonTip())
+            {
+                bt->set(0, get(strings::up));
+                bt->set(1, decideText_);
+                bt->set(2, get(strings::down));
+            }
         }
 
-        int dial = key->getDial();
+        auto bt = [&](bool f) { return enableButton_ ? f : false; };
+        auto dl = [&](bool f) { return enableDial_ ? f : false; };
 
-        if (key->isTrigger(0) || dial > 0)
+        int dial = enableDial_ ? key->getDial() : 0;
+        if (bt(key->isTrigger(0)) || dial > 0)
         {
             std::lock_guard<sys::Mutex> lock(getMutex());
             selectChanged();
@@ -107,14 +114,14 @@ ScrollList::onUpdate(UpdateContext& ctx)
                 touchSelectWidget();
                 int d = dial ? dial : 1;
                 selectIndex_ -= d;
-                if (selectIndex_ < 0)
+                if (selectIndex_ < (enableNoSelect_ ? -1 : 0))
                 {
                     selectIndex_ = n - 1;
                 }
                 touchSelectWidget();
             }
         }
-        else if (key->isTrigger(2) || dial < 0)
+        else if (bt(key->isTrigger(2)) || dial < 0)
         {
             std::lock_guard<sys::Mutex> lock(getMutex());
             selectChanged();
@@ -126,23 +133,23 @@ ScrollList::onUpdate(UpdateContext& ctx)
                 selectIndex_ += d;
                 if (selectIndex_ >= n)
                 {
-                    selectIndex_ = 0;
+                    selectIndex_ = enableNoSelect_ ? -1 : 0;
                 }
                 touchSelectWidget();
             }
         }
-        else if (key->isLongPressEdge(1) || key->isLongPressEdge(3))
+        else if (bt(key->isLongPressEdge(1)) || dl(key->isLongPressEdge(3)))
         {
-            if (longPressFunc_)
+            if (longPressFunc_ && selectIndex_ >= 0)
             {
                 DBOUT(("long press %d\n", selectIndex_));
                 ctx.acceptLongPress();
                 longPressFunc_(ctx, selectIndex_);
             }
         }
-        else if (key->isReleaseEdge(1) || key->isReleaseEdge(3))
+        else if (bt(key->isReleaseEdge(1)) || dl(key->isReleaseEdge(3)))
         {
-            if (decideFunc_)
+            if (decideFunc_ && selectIndex_ >= 0)
             {
                 DBOUT(("decide %d\n", selectIndex_));
                 decideFunc_(ctx, selectIndex_);
@@ -154,7 +161,7 @@ ScrollList::onUpdate(UpdateContext& ctx)
     int itemSize     = getBaseItemSize();
     auto widgetSize  = getSize();
     int dispSize     = vertical_ ? widgetSize.h : widgetSize.w;
-    int absPos       = itemSize * selectIndex_;
+    int absPos       = itemSize * std::max(0, selectIndex_);
     int pos          = absPos + displayOffset_;
     int posTail      = pos + itemSize;
     if (pos < 0)
@@ -227,13 +234,16 @@ ScrollList::onRender(RenderContext& ctx)
     {
         // listのあまり領域
         Vec2 p{0, int(n * step + displayOffset_)};
-        Dim2 s{wsize.w - WindowSettings::SCROLL_BAR_WIDTH, wsize.h - p.y};
+        Dim2 s{wsize.w -
+                   (needScrollBar_ ? WindowSettings::SCROLL_BAR_WIDTH : 0),
+               wsize.h - p.y};
         if (p.y < wsize.h && (needRefresh_ || ctx.isInvalidated(p, s)))
         {
             ctx.fill(p, s, ws.borderColor);
         }
     }
 
+    if (needScrollBar_)
     {
         // スクロールバー
         drawVScrollBar(ctx,

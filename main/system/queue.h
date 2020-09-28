@@ -20,8 +20,8 @@ public:
     Queue(size_t capacity) { handle_ = xQueueCreate(capacity, sizeof(T)); }
     ~Queue() { vQueueDelete(handle_); }
 
-    bool push(const T& v) { return !xQueueSend(handle_, &v, portMAX_DELAY); }
-    bool pop(T* v) { return !xQueueReceive(handle_, v, portMAX_DELAY); }
+    bool push(const T& v) { return xQueueSend(handle_, &v, portMAX_DELAY); }
+    bool pop(T* v) { return xQueueReceive(handle_, v, portMAX_DELAY); }
     void clear() { xQueueReset(handle_); }
 
     size_t size() const { return uxQueueMessagesWaiting(handle_); }

@@ -4,6 +4,7 @@
  */
 
 #include "context.h"
+#include "draw_util.h"
 #include "key.h"
 #include "ui_manager.h"
 #include <debug.h>
@@ -223,6 +224,61 @@ RenderContext::put(Vec2 pos, const graphics::FrameBufferBase& fb)
 {
     pos += getCurrentPosition();
     getFrameBuffer()->transfer(fb, pos.x, pos.y);
+}
+
+void
+RenderContext::put(Vec2 pos,
+                   const graphics::FrameBufferBase& fb,
+                   const BBox& bb)
+{
+    if (!bb.isValid())
+    {
+        return;
+    }
+    pos += getCurrentPosition();
+    getFrameBuffer()->transfer(fb,
+                               pos.x + bb.p[0].x,
+                               pos.y + bb.p[0].y,
+                               bb.p[0].x,
+                               bb.p[0].y,
+                               bb.getWidth(),
+                               bb.getHeight());
+}
+
+void
+RenderContext::putTexture(Vec2 pos, const Rect& src)
+{
+    pos += getCurrentPosition();
+
+    ui::put(*getFrameBuffer(), *getTexture(), pos, src);
+}
+
+void
+RenderContext::putTextureTrans(Vec2 pos, const Rect& src)
+{
+    pos += getCurrentPosition();
+
+    ui::putTrans(*getFrameBuffer(), *getTexture(), pos, src);
+}
+
+void
+RenderContext::putTextureText(const char* text,
+                              int charOfs,
+                              Vec2 pos,
+                              const Rect& font,
+                              uint32_t color,
+                              uint32_t bg)
+{
+    pos += getCurrentPosition();
+
+    ui::putText(*getFrameBuffer(),
+                *getTexture(),
+                text,
+                charOfs,
+                pos,
+                font,
+                makeColor(color),
+                makeColor(bg));
 }
 
 } // namespace ui

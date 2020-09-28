@@ -41,6 +41,18 @@ public:
                     int pitchInBytes,
                     const void* img16) override;
 
+    void put(const Texture& tex, int dx, int dy, int sx, int sy, int w, int h)
+        override;
+    void putReplaced(const Texture& tex,
+                     int dx,
+                     int dy,
+                     int sx,
+                     int sy,
+                     int w,
+                     int h,
+                     uint16_t color,
+                     uint16_t bg) override;
+
 public:
     TFT_eSPI* _getLCD() { return &display_; }
 

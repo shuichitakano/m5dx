@@ -15,6 +15,7 @@ void initialize();
 void setFMClock(uint32_t freq, int sampleRateDiv);
 void setFMVolume(float v);
 void attachInternalSpeaker();
+void setInternalSpeaker3rdDeltaSigmaMode(bool f);
 
 // const int16_t* getRecentSampleForTest();
 

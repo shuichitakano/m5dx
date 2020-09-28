@@ -40,6 +40,12 @@ enum class InitialBTMode
     ALWAYS,
 };
 
+enum class DeltaSigmaMode
+{
+    ORDER_1ST,
+    ORDER_3RD,
+};
+
 struct TrackSetting
 {
     bool mask_     = true;
@@ -72,16 +78,18 @@ struct BluetoothAudio
 
 class SystemSettings
 {
-    Language language_         = Language::JAPANESE;
-    SoundModule soundModule_   = SoundModule::AUTO;
-    int volume_                = -6;
-    int loopCount_             = 1;
-    bool shuffleMode_          = false;
-    RepeatMode repeatMode_     = RepeatMode::ALL;
-    int backLightIntensity_    = 30;
-    bool internalSpeaker_      = true;
-    bool displayOffIfReverse_  = true; // 反転で画面オフ
-    PlayerDialMode playerDial_ = PlayerDialMode::VOLUME;
+    Language language_        = Language::JAPANESE;
+    SoundModule soundModule_  = SoundModule::AUTO;
+    int volume_               = -6;
+    int loopCount_            = 1;
+    bool shuffleMode_         = false;
+    RepeatMode repeatMode_    = RepeatMode::ALL;
+    int backLightIntensity_   = 30;
+    bool internalSpeaker_     = true;
+    bool displayOffIfReverse_ = true; // 反転で画面オフ
+    //    PlayerDialMode playerDial_     = PlayerDialMode::VOLUME;
+    PlayerDialMode playerDial_     = PlayerDialMode::TRACK_SELECT;
+    DeltaSigmaMode deltaSigmaMode_ = DeltaSigmaMode::ORDER_3RD;
 
     TrackSetting trackSetting_[100];
 
@@ -113,6 +121,9 @@ public:
     bool isEnabledInternalSpeaker() const { return internalSpeaker_; }
     void enableInternalSpeaker(bool f) { internalSpeaker_ = f; }
 
+    DeltaSigmaMode getDeltaSigmaMode() const { return deltaSigmaMode_; }
+    void setDeltaSigmaMode(DeltaSigmaMode m) { deltaSigmaMode_ = m; }
+
     bool isEnabledDisplayOffIfReverse() const { return displayOffIfReverse_; }
     void enableDisplayOffIfReverse(bool f) { displayOffIfReverse_ = f; }
 
@@ -130,6 +141,7 @@ public:
 
     //
     void applyBackLightIntensity() const;
+    void applyDeltaSigmaMode() const;
 
     static SystemSettings& instance();
 };
@@ -138,6 +150,7 @@ const char* toString(SoundModule v);
 const char* toString(Language l);
 const char* toString(RepeatMode m);
 const char* toString(PlayerDialMode m);
+const char* toString(DeltaSigmaMode m);
 const char* toString(InitialBTMode m);
 
 } // namespace ui

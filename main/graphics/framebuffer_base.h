@@ -11,6 +11,7 @@ namespace graphics
 {
 
 class FrameBuffer;
+class Texture;
 
 class FrameBufferBase
 {
@@ -41,6 +42,20 @@ public:
                             int sy,
                             int w,
                             int h) const;
+
+    virtual void
+    put(const Texture& tex, int dx, int dy, int sx, int sy, int w, int h);
+    virtual void
+    putTrans(const Texture& tex, int dx, int dy, int sx, int sy, int w, int h);
+    virtual void putReplaced(const Texture& tex,
+                             int dx,
+                             int dy,
+                             int sx,
+                             int sy,
+                             int w,
+                             int h,
+                             uint16_t color,
+                             uint16_t bg);
 
     void transfer(const FrameBufferBase& src,
                   int dx,

@@ -47,6 +47,7 @@ extern const Strings trackMask;
 extern const Strings trackSelect;
 
 extern const Strings internalSpeaker;
+extern const Strings deltaSigmaMode;
 extern const Strings backLightIntensity;
 extern const Strings dispOffReverse;
 extern const Strings trackOverride;
@@ -56,6 +57,8 @@ extern const Strings bootBTMIDI;
 extern const Strings bootBTAudio;
 extern const Strings _30sec;
 extern const Strings _60sec;
+extern const Strings _1stOrder;
+extern const Strings _3rdOrder;
 
 extern const Strings language;
 extern const Strings japanese;

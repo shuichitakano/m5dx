@@ -14,7 +14,8 @@
 namespace graphics
 {
 class FrameBufferBase;
-}
+class Texture;
+} // namespace graphics
 
 namespace ui
 {
@@ -121,14 +122,18 @@ class UpdateContext : public Context
     KeyState* keyState_{};
     ButtonTip* buttonTip_{};
     bool enableInput_ = true;
+    float dt_         = 0;
 
 public:
-    UpdateContext(UIManager* uiManager, KeyState* ks, ButtonTip* bt)
+    UpdateContext(float dt, UIManager* uiManager, KeyState* ks, ButtonTip* bt)
         : uiManager_(uiManager)
         , keyState_(ks)
         , buttonTip_(bt)
+        , dt_(dt)
     {
     }
+
+    float getDeltaT() const { return dt_; }
 
     UIManager* getUIManager() { return uiManager_; }
     void popManagedUI(int n = 1);
@@ -138,6 +143,7 @@ public:
     {
         return enableInput_ ? keyState_ : nullptr;
     }
+    const KeyState* _getKeyState() const { return keyState_; }
 
     ButtonTip* getButtonTip() { return buttonTip_; }
 
@@ -150,6 +156,7 @@ class RenderContext : public Context
 {
     BBox invalidatedRegion_;
     graphics::FrameBufferBase* frameBuffer_{};
+    const graphics::Texture* texture_{};
 
     WindowSettings windowSettings_;
 
@@ -165,6 +172,9 @@ public:
 
     graphics::FrameBufferBase* getFrameBuffer() { return frameBuffer_; }
     void setFrameBuffer(graphics::FrameBufferBase* b);
+
+    const graphics::Texture* getTexture() const { return texture_; }
+    void setTexture(const graphics::Texture* t) { texture_ = t; }
 
     graphics::FrameBuffer&
     getTemporaryFrameBuffer(uint32_t w, uint32_t h, int bpp = 16);
@@ -189,12 +199,38 @@ public:
                  TextAlignH alignH = TextAlignH::LEFT,
                  TextAlignV alignV = TextAlignV::TOP);
 
+    void putText(const char* str,
+                 const Rect& rect,
+                 TextAlignH alignH = TextAlignH::LEFT,
+                 TextAlignV alignV = TextAlignV::TOP)
+    {
+        putText(str, rect.pos, rect.size, alignH, alignV);
+    }
+
     void drawBits(Vec2 pos, int w, int h, const uint8_t* bits, uint32_t color);
 
     void fill(Vec2 pos, const Dim2& size, uint32_t color);
+    void fill(const Rect& rect, uint32_t color)
+    {
+        fill(rect.pos, rect.size, color);
+    }
     void drawRect(Vec2 pos, const Dim2& size, uint32_t color);
+    void drawRect(const Rect& rect, uint32_t color)
+    {
+        drawRect(rect.pos, rect.size, color);
+    }
 
     void put(Vec2 pos, const graphics::FrameBufferBase& fb);
+    void put(Vec2 pos, const graphics::FrameBufferBase& fb, const BBox& bb);
+
+    void putTexture(Vec2 pos, const Rect& src);
+    void putTextureTrans(Vec2 pos, const Rect& src);
+    void putTextureText(const char* text,
+                        int charOfs,
+                        Vec2 pos,
+                        const Rect& font,
+                        uint32_t color,
+                        uint32_t bg);
 
 protected:
     struct FBRestoreState
