@@ -5,6 +5,7 @@
 
 #include "framebuffer_base.h"
 #include "../debug.h"
+#include "texture.h"
 #include <algorithm>
 
 namespace graphics
@@ -106,6 +107,90 @@ FrameBufferBase::transferTo(
             dst.setPixel(dx + x, dy + y, getPixel(sx + x, sy + y));
             // todo: フォーマット変換
         }
+    }
+}
+
+void
+FrameBufferBase::put(
+    const Texture& tex, int dx, int dy, int sx, int sy, int w, int h)
+{
+    adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+
+    auto srcPitch   = tex.getPitch();
+    const auto* src = tex.getBits() + sx + srcPitch * sy;
+    const auto* pal = tex.getPalette();
+
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            auto c = pal[*(src + x)];
+            setPixel(dx + x, dy + y, c);
+        }
+        src += srcPitch;
+    }
+}
+
+void
+FrameBufferBase::putTrans(
+    const Texture& tex, int dx, int dy, int sx, int sy, int w, int h)
+{
+    adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+
+    auto srcPitch   = tex.getPitch();
+    const auto* src = tex.getBits() + sx + srcPitch * sy;
+    const auto* pal = tex.getPalette();
+
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            if (auto p = *(src + x))
+            {
+                auto c = pal[p];
+                setPixel(dx + x, dy + y, c);
+            }
+        }
+        src += srcPitch;
+    }
+}
+
+void
+FrameBufferBase::putReplaced(const Texture& tex,
+                             int dx,
+                             int dy,
+                             int sx,
+                             int sy,
+                             int w,
+                             int h,
+                             uint16_t color,
+                             uint16_t bg)
+{
+    adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+
+    auto srcPitch   = tex.getPitch();
+    const auto* src = tex.getBits() + sx + srcPitch * sy;
+
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x)
+        {
+            auto c = *(src + x);
+            setPixel(dx + x, dy + y, c ? color : bg);
+        }
+        src += srcPitch;
     }
 }
 

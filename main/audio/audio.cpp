@@ -51,8 +51,14 @@ class InternalSpeakerOut : public AudioOutDriver
 
     float volume_ = 1.0f;
 
-    int residual_   = 0;
     int prevSample_ = 0;
+    int pv_         = 0;
+    int pv1_        = 0;
+    int pv2_        = 0;
+    int pv3_        = 0;
+    int pv4_        = 0;
+
+    bool deltaSigma3rd_ = false;
 
     static constexpr int overSampleShift_ = 2;
 
@@ -124,6 +130,8 @@ public:
         }
     }
 
+    void set3rdDeltaSigmaMode(bool f) { deltaSigma3rd_ = f; }
+
     uint32_t getSampleRate() const override { return 44100; };
     void setVolume(float v) override { volume_ = v; }
     float getVolume() const override { return volume_; }
@@ -145,76 +153,76 @@ public:
 
         auto ns         = n >> overSampleShift_;
         const auto* src = data;
+        int prevSample  = prevSample_;
+        int pv          = pv_;
+        int pv1         = pv1_;
+        int pv2         = pv2_;
+        int pv3         = pv3_;
+        int pv4         = pv4_;
+
         for (auto osct = 1 << overSampleShift_; osct; --osct)
         {
             auto* dst = outSampleBuffer;
 
-            for (auto ct = ns; ct; --ct)
+            if (deltaSigma3rd_)
             {
-                int v = ((((*src)[0] + (*src)[1]) * scale) >> 16) + bias;
-
-                if (overSampleShift_ == 0)
+                for (auto ct = ns; ct; --ct)
                 {
-                    v += residual_;
-                    int vq    = v & 0xff00;
-                    residual_ = v - vq;
+                    int v = ((((*src)[0] + (*src)[1]) * scale) >> 16) + bias;
 
-                    dst[0] = vq;
-                    dst[1] = vq;
-                    src += 1;
-                    dst += 2;
-                }
-                if (overSampleShift_ == 1)
-                {
-                    int v0    = ((prevSample_ + v) >> 1) + residual_;
-                    int vq    = v0 & 0xff00;
-                    residual_ = v0 - vq;
-                    dst[0]    = vq;
-                    dst[1]    = vq;
+                    auto update = [&](int v0, int ofs) {
+                        pv1 += (v0 - pv);
+                        pv2 += (pv1 - pv);
+                        pv3 += (pv2 - pv);
+                        int vq       = pv3 & 0xff00;
+                        pv           = vq;
+                        dst[ofs + 0] = vq;
+                        dst[ofs + 1] = vq;
+                    };
 
-                    int v1    = v + residual_;
-                    vq        = v1 & 0xff00;
-                    residual_ = v1 - vq;
-                    dst[2]    = vq;
-                    dst[3]    = vq;
-
-                    src += 1;
-                    dst += 4;
-                    prevSample_ = v;
-                }
-                if (overSampleShift_ == 2)
-                {
-                    int v0    = ((prevSample_ * 3 + v) >> 2) + residual_;
-                    int vq    = v0 & 0xff00;
-                    residual_ = v0 - vq;
-                    dst[0]    = vq;
-                    dst[1]    = vq;
-
-                    int v1    = ((prevSample_ + v) >> 1) + residual_;
-                    vq        = v1 & 0xff00;
-                    residual_ = v1 - vq;
-                    dst[2]    = vq;
-                    dst[3]    = vq;
-
-                    int v2    = ((prevSample_ + v * 3) >> 2) + residual_;
-                    vq        = v2 & 0xff00;
-                    residual_ = v2 - vq;
-                    dst[4]    = vq;
-                    dst[5]    = vq;
-
-                    int v3    = v + residual_;
-                    vq        = v3 & 0xff00;
-                    residual_ = v3 - vq;
-                    dst[6]    = vq;
-                    dst[7]    = vq;
+                    update((prevSample * 3 + v) >> 2, 0);
+                    update((prevSample + v) >> 1, 2);
+                    update((prevSample + v * 3) >> 2, 4);
+                    update(v, 6);
 
                     src += 1;
                     dst += 8;
-                    prevSample_ = v;
+                    prevSample = v;
+                }
+            }
+            else
+            {
+                for (auto ct = ns; ct; --ct)
+                {
+                    int v = ((((*src)[0] + (*src)[1]) * scale) >> 16) + bias;
+
+                    auto update = [&](int v0, int ofs) {
+                        pv1 += (v0 - pv);
+                        int vq       = pv1 & 0xff00;
+                        pv           = vq;
+                        dst[ofs + 0] = vq;
+                        dst[ofs + 1] = vq;
+                    };
+
+                    update((prevSample * 3 + v) >> 2, 0);
+                    update((prevSample + v) >> 1, 2);
+                    update((prevSample + v * 3) >> 2, 4);
+                    update(v, 6);
+
+                    src += 1;
+                    dst += 8;
+                    prevSample = v;
                 }
             }
             write(outSampleBuffer, n);
         }
+
+        prevSample_ = prevSample;
+        pv_         = pv;
+        pv1_        = pv1;
+        pv2_        = pv2;
+        pv3_        = pv3;
+        pv4_        = pv4;
     }
 
     static InternalSpeakerOut& instance()
@@ -388,6 +396,12 @@ attachInternalSpeaker()
 {
     AudioOutDriverManager::instance().setDriver(
         &InternalSpeakerOut::instance());
+}
+
+void
+setInternalSpeaker3rdDeltaSigmaMode(bool f)
+{
+    InternalSpeakerOut::instance().set3rdDeltaSigmaMode(f);
 }
 
 void

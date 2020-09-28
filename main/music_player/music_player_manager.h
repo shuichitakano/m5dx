@@ -32,6 +32,7 @@ bool prevPlayList();
 bool prevOrRewindPlayList();
 
 const std::string& getCurrentPlayFile();
+int getCurrentListIndex();
 
 sys::Mutex& getMutex();
 

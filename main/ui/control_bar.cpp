@@ -34,9 +34,9 @@ ControlBar::onRender(RenderContext& ctx)
         //        auto& ws = ctx.getWindowSettings();
 
         ctx.applyClipRegion();
-        tmpFB.fill(0);
+        tmpFB.fill(makeColor(tmpFB, 0x808080));
 
-        ctx.setFontColor(0xa0a0a0);
+        ctx.setFontColor(0xffffff);
         auto& fm = ctx.getFontManager();
         fm.setEdgedMode(false);
         fm.setTransparentMode(true);

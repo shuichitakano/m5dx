@@ -48,7 +48,7 @@ extern "C"
             auto ch  = &((MXWORK_CH*)MXDRV_GetWork(MXDRV_WORK_FM))[8];
             int note = (ch->S0012 + 27) >> 6;
             //      printf ("note %d %d\n", ch->S0012, note);
-            p->setNote(0, note - 40);
+            p->setNote(0, note - 48);
         }
         if (data & 1)
             p->stop();
@@ -74,7 +74,7 @@ extern "C"
         else
             work = &((MXWORK_CH*)MXDRV_GetWork(MXDRV_WORK_PCM))[ch - 1];
         int note = (work->S0012 + 27) >> 6;
-        p->setNote(ch, note - 40);
+        p->setNote(ch, note - 48);
 
         return 0;
     }

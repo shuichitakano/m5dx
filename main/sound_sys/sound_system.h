@@ -5,6 +5,8 @@
 #ifndef _8CE7218C_8133_F06C_5BE2_43E774077F9E
 #define _8CE7218C_8133_F06C_5BE2_43E774077F9E
 
+#include <array>
+#include <math.h>
 #include <stdint.h>
 
 namespace sound_sys
@@ -18,32 +20,21 @@ public:
         SYSTEM_INVALID = -1,
 
         SYSTEM_YM2151 = 0,
-        SYSTEM_M6258,
         SYSTEM_YMF288,
         SYSTEM_Y8950,
+        SYSTEM_YM2203,
+        SYSTEM_AY3_8910,
         SYSTEM_MIDI,
+        SYSTEM_SCC,
+        SYSTEM_YM2610,
 
-        SYSTEM_REBIRTH,
-        SYSTEM_SPFM,
-        SYSTEM_EMULATION,
-        SYSTEM_FM1,
-
-        SYSTEM_SEGA_PCM = 26,
+        SYSTEM_M6258 = 12,
         SYSTEM_M6295,
+        SYSTEM_C140,
+        SYSTEM_SEGA_PCM,
         SYSTEM_054539,
         SYSTEM_053260,
-
-        SYSTEM_PSG,
-        SYSTEM_SCC,
-        SYSTEM_OPL,
         SYSTEM_PCM8,
-        SYSTEM_C140,
-
-        SYSTEM_OPNA,
-        SYSTEM_OPNB,
-        SYSTEM_OPN,
-        SYSTEM_OPM,
-        SYSTEM_OPLL,
     };
 
     struct SystemInfo
@@ -57,6 +48,11 @@ public:
         int channelCount{};                      //< チャネル数
         uint32_t oneShotChannelMask{}; //< 単発再生なスロット識別用
         bool multiVoice{};
+
+        SystemID getSystemID(int ch) const
+        {
+            return systemIDPerCh ? systemIDPerCh[ch] : systemID;
+        }
     };
 
 public:
@@ -80,6 +76,21 @@ public:
     virtual uint32_t getEnabledChannels() const = 0;
 
     virtual const char* getStatusString(int ch, char* buf, int n) const = 0;
+
+    std::array<float, 2> getChLevel(int ch) const
+    {
+        // 移行用
+        float v   = getVolume(ch);
+        float pan = getPan(ch);
+        return {std::min(1.0f, -pan + 1.0f) * v,
+                std::min(1.0f, pan + 1.0f) * v};
+    }
+
+    void fetch() { triggerCache_ = getKeyOnTrigger(); }
+    uint32_t getKeyOnTriggerCache() const { return triggerCache_; }
+
+private:
+    uint32_t triggerCache_ = 0;
 };
 
 } // namespace sound_sys

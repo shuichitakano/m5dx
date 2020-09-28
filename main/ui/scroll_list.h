@@ -16,7 +16,12 @@ namespace ui
 
 class ScrollList : public Widget, public WidgetList
 {
-    bool vertical_             = true;
+    bool vertical_       = true;
+    bool needScrollBar_  = true;
+    bool enableDial_     = true;
+    bool enableButton_   = true;
+    bool enableNoSelect_ = false; // 無選択状態を使う？
+
     int displayOffset_         = 0;
     int selectIndex_           = 0;
     bool needRefresh_          = true;
@@ -34,6 +39,10 @@ class ScrollList : public Widget, public WidgetList
 public:
     ScrollList();
     void setDirectionIsVertical(bool v) { vertical_ = v; }
+    void setNeedScrollBar(bool v) { needScrollBar_ = v; }
+    void enableDial(bool f) { enableDial_ = f; }
+    void enableButton(bool f) { enableButton_ = f; }
+    void enableNoSelect(bool f) { enableNoSelect_ = f; }
 
     // スクロール方向のWidgetサイズを取得
     virtual uint16_t getBaseItemSize() const = 0;

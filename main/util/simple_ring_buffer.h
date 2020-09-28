@@ -49,6 +49,34 @@ public:
         }
     }
 
+    // resampling + convert 付き
+    template <class T2, class F>
+    void copyLatest(T2* dst, int n, int step, const F& sampleFunc) const
+    {
+        n *= step;
+        int p0  = (cur_ - n) & mask_;
+        auto n1 = std::min(n, mask_ + 1 - p0);
+        auto n2 = n - n1;
+
+        auto p    = buffer_ + p0;
+        auto pEnd = p + n1;
+        while (p < pEnd)
+        {
+            *dst = sampleFunc(*p);
+            ++dst;
+            p += step;
+        }
+
+        p    = buffer_ + (p - pEnd);
+        pEnd = buffer_ + n2;
+        while (p < pEnd)
+        {
+            *dst = sampleFunc(*p);
+            ++dst;
+            p += step;
+        }
+    }
+
 private:
     T* buffer_;
     int cur_;

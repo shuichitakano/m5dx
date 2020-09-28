@@ -5,6 +5,7 @@
 
 #include "display.h"
 #include "../debug.h"
+#include "texture.h"
 
 namespace graphics
 {
@@ -147,6 +148,78 @@ Display::drawBits16(
             ++y;
             p += pitchInBytes;
         }
+    }
+}
+
+namespace
+{
+DRAM_ATTR uint16_t workBuffer_[320];
+
+uint16_t
+swapEndian(uint16_t c)
+{
+    return (c >> 8) | (c << 8);
+}
+
+} // namespace
+
+void
+Display::put(const Texture& tex, int dx, int dy, int sx, int sy, int w, int h)
+{
+    adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+
+    auto srcPitch   = tex.getPitch();
+    const auto* src = tex.getBits() + sx + srcPitch * sy;
+    const auto* pal = tex.getPalette();
+
+    for (int y = 0; y < h; ++y)
+    {
+        uint16_t* p = workBuffer_;
+        for (int x = 0; x < w; ++x)
+        {
+            *p++ = swapEndian(pal[*(src + x)]);
+        }
+        _getLCD()->pushImage(dx, dy + y, w, 1, workBuffer_);
+        src += srcPitch;
+    }
+}
+
+void
+Display::putReplaced(const Texture& tex,
+                     int dx,
+                     int dy,
+                     int sx,
+                     int sy,
+                     int w,
+                     int h,
+                     uint16_t color,
+                     uint16_t bg)
+{
+    adjustTransferRegion(dx, dy, sx, sy, w, h);
+    if (!w || !h)
+    {
+        return;
+    }
+
+    color = swapEndian(color);
+    bg    = swapEndian(bg);
+
+    auto srcPitch   = tex.getPitch();
+    const auto* src = tex.getBits() + sx + srcPitch * sy;
+
+    for (int y = 0; y < h; ++y)
+    {
+        uint16_t* p = workBuffer_;
+        for (int x = 0; x < w; ++x)
+        {
+            *p++ = *(src + x) ? color : bg;
+        }
+        _getLCD()->pushImage(dx, dy + y, w, 1, workBuffer_);
+        src += srcPitch;
     }
 }
 

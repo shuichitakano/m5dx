@@ -312,6 +312,16 @@ ListItem<bool, 2> internalSpeakerItem(
     [](auto m) { return getEnableDisableString(m); },
     {false, true});
 
+ListItem<DeltaSigmaMode, 2> internalSpeaker3rdDeltaSigmaModeItem(
+    [] { return get(strings::deltaSigmaMode); },
+    [] { return SystemSettings::instance().getDeltaSigmaMode(); },
+    [](UpdateContext&, auto m) {
+        SystemSettings::instance().setDeltaSigmaMode(m);
+        SystemSettings::instance().applyDeltaSigmaMode();
+    },
+    [](auto m) { return toString(m); },
+    {DeltaSigmaMode::ORDER_1ST, DeltaSigmaMode::ORDER_3RD});
+
 ListItem<bool, 2> dispOffReverseItem(
     [] { return get(strings::dispOffReverse); },
     [] { return SystemSettings::instance().isEnabledDisplayOffIfReverse(); },
@@ -388,6 +398,7 @@ SettingWindow::SettingWindow()
     append(&repeatModeItem);
     append(&backLightItem);
     append(&internalSpeakerItem);
+    append(&internalSpeaker3rdDeltaSigmaModeItem);
     append(&playerDialModeItem);
     append(&dispOffReverseItem);
     append(&btAudioMenuItem);

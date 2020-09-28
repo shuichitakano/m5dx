@@ -117,7 +117,18 @@ FrameBuffer::fill(uint32_t c)
 void
 FrameBuffer::fill(int x, int y, int w, int h, uint32_t c)
 {
-    img_.fillRect(x, y, w, h, c);
+    if (w == 1)
+    {
+        img_.drawFastVLine(x, y, h, c);
+    }
+    else if (h == 1)
+    {
+        img_.drawFastHLine(x, y, w, c);
+    }
+    else
+    {
+        img_.fillRect(x, y, w, h, c);
+    }
 }
 
 void

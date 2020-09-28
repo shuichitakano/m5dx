@@ -27,7 +27,7 @@ YM2151::YM2151()
         inst = -1;
 
     sysInfo_.channelCount = 8;
-    sysInfo_.systemID     = SoundSystem::SYSTEM_OPM;
+    sysInfo_.systemID     = SoundSystem::SYSTEM_YM2151;
 
     sysInfo_.clock          = 4000000;
     sysInfo_.actualSystemID = SoundSystem::SYSTEM_YM2151;

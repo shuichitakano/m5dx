@@ -291,4 +291,10 @@ getCurrentPlayFile()
     return currentSong_.filename_;
 }
 
+int
+getCurrentListIndex()
+{
+    return currentSong_.listIndex_;
+}
+
 } // namespace music_player

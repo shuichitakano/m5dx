@@ -45,33 +45,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
-DEF_LINKED_BINARY(stmdx_material_bmp);
-
-constexpr uint16_t
-makeColor(int r, int g, int b)
-{
-    return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
-}
-
-// void
-// spriteTest()
-// {
-//     using Sprite = TFT_eSprite;
-
-//     Sprite img(&lcd);
-
-//     img.setColorDepth(1);
-//     img.createSprite(128, 64);
-//     img.fillSprite(0);
-
-//     img.fillTriangle(35, 0, 0, 59, 69, 59, 1);
-//     img.fillTriangle(35, 79, 0, 20, 69, 20, 1);
-
-//     img.setBitmapColor(makeColor(255, 0, 255), 0);
-//     img.pushSprite(10, 20, 0);
-
-//     img.deleteSprite();
-// }
+DEF_LINKED_BINARY(m5dx_material_bmp);
 
 namespace
 {
@@ -121,7 +95,7 @@ setup()
     DBOUT(("module id = %d\n", (int)moduleID));
 
     //
-    auto bmp = GET_LINKED_BINARY_T(graphics::BMP, stmdx_material_bmp);
+    auto bmp = GET_LINKED_BINARY_T(graphics::BMP, m5dx_material_bmp);
     DBOUT(("bmp = %p, bits = %p, (%dx%d)\n",
            bmp,
            bmp->getBits(),
