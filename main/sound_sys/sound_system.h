@@ -75,7 +75,8 @@ public:
     virtual uint32_t getKeyOnTrigger()          = 0;
     virtual uint32_t getEnabledChannels() const = 0;
 
-    virtual const char* getStatusString(int ch, char* buf, int n) const = 0;
+    //    virtual const char* getStatusString(int ch, char* buf, int n) const =
+    //    0;
 
     std::array<float, 2> getChLevel(int ch) const
     {

@@ -102,7 +102,6 @@ KeyboardList::onUpdate(UpdateContext& ctx)
 
             auto& info = soundSys->getSystemInfo();
             int nCh    = info.channelCount;
-
             for (int ch = 0; ch < nCh; ++ch)
             {
                 if (itemIdx >= static_cast<int>(items_.size()))
@@ -455,11 +454,21 @@ KeyboardList::Item::onRender(RenderContext& ctx)
                      "%02d%c%02d",
                      noteIdx,
                      noteSub < 0 ? ';' : ':', // -+
-                     noteSub < 0 ? -noteSub : noteSub);
+                     std::min(50, noteSub < 0 ? -noteSub : noteSub));
             ctx.putTextureText(
                 "1", '0', pos::iconKey, tex::font6x7, col::status, colBG);
             ctx.putTextureText(
                 tmp, '0', pos::keyText, tex::font5x6, col::status, colBG);
+#if 0
+            if (strlen(tmp) > 5)
+            {
+                printf("'%s' %d, %d, %f\n",
+                       tmp,
+                       noteIdx,
+                       noteSub,
+                       soundSys_->getNote(ch_, 0));
+            }
+#endif
         }
     }
 }

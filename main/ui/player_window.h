@@ -5,6 +5,7 @@
 #ifndef ACAAAD1C_E134_145C_2286_21780926CC3C
 #define ACAAAD1C_E134_145C_2286_21780926CC3C
 
+#include "neo_pixel_disp.h"
 #include "widget.h"
 #include <memory>
 #include <string>
@@ -33,6 +34,9 @@ class PlayerWindow : public Widget,
     float volVisible_ = 0;
 
     std::vector<float> roudnessTable_;
+
+    NeoPixelDisp neoPixelDisp_;
+    float currentDt_ = 0;
 
 public:
     PlayerWindow();

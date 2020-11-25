@@ -111,7 +111,6 @@ public:
     uint32_t getKeyOnChannels() const override;
     uint32_t getKeyOnTrigger() override;
     uint32_t getEnabledChannels() const override;
-    const char* getStatusString(int ch, char* buf, int n) const override;
 
     // SampleGenerator
     void accumSamples(std::array<int32_t, 2>* buffer,

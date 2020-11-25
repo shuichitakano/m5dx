@@ -105,7 +105,9 @@ MDXPlayer::isSupported(const char* filename)
 {
     auto p = strrchr(filename, '.');
     if (p)
+    {
         return strcasecmp(p, ".MDX") == 0;
+    }
     return false;
 }
 

@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <debug.h>
 #include <functional>
+#include <m5dx_module.h>
 #include <string>
 
 namespace ui
@@ -219,6 +220,15 @@ toString(int v)
     return buf;
 }
 
+std::string
+toString(float v)
+{
+    //    return std::to_string(v);
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", v);
+    return buf;
+}
+
 ListItem<Language, 2> languageItem(
     [] { return get(strings::language); },
     [] { return SystemSettings::instance().getLanguage(); },
@@ -250,8 +260,22 @@ writeModuleID(UpdateContext& ctx, SoundModule id)
         p->setMessage(buf);
 
         p->appendButton(get(strings::no));
-        p->appendButton(get(strings::yes), [](UpdateContext& ctx) {
-            DBOUT(("write!!\n"));
+        p->appendButton(get(strings::yes), [id](UpdateContext& ctx) {
+            switch (id)
+            {
+            case SoundModule::YM2151:
+                DBOUT(("writeID 2151\n"));
+                M5DX::writeModuleID(M5DX::ModuleID::YM2151);
+                break;
+
+            case SoundModule::YMF288:
+                DBOUT(("writeID 288\n"));
+                M5DX::writeModuleID(M5DX::ModuleID::YMF288);
+                break;
+
+            default:
+                break;
+            }
             ctx.popManagedUI(); // もう一つ閉じる
         });
 
@@ -348,6 +372,47 @@ ListItem<int, 10> backLightItem(
     [](auto v) { return toString(v); },
     {10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
 
+ListItem<NeoPixelMode, 4> neoPixelModeItem(
+    [] { return get(strings::NeoPixelMode); },
+    [] { return SystemSettings::instance().getNeoPixelMode(); },
+    [](UpdateContext&, auto m) {
+        SystemSettings::instance().setNeoPixelMode(m);
+    },
+    [](auto m) { return toString(m); },
+    {NeoPixelMode::OFF,
+     NeoPixelMode::SIMPLE_LV,
+     NeoPixelMode::GAMING_LV,
+     NeoPixelMode::SPECTRUM});
+
+ListItem<int, 10> neoPixelBrightnessItem(
+    [] { return get(strings::NeoPixelBrightness); },
+    [] { return SystemSettings::instance().getNeoPixelBrightness(); },
+    [](UpdateContext&, auto v) {
+        SystemSettings::instance().setNeoPixelBrightness(v);
+    },
+    [](auto v) { return toString(v); },
+    {10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
+
+ListItem<int, 13> ymf288FMVolumeItem(
+    [] { return get(strings::YMF288FMVolume); },
+    [] { return SystemSettings::instance().getYMF288FMVolume(); },
+    [](UpdateContext&, auto v) {
+        SystemSettings::instance().setYMF288FMVolume(v);
+        SystemSettings::instance().applyYMF288Volume();
+    },
+    [](auto v) { return toString(v * 0.75f) + "dB"; },
+    {0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12});
+
+ListItem<int, 13> ymf288RhythmVolumeItem(
+    [] { return get(strings::YMF288RhythmVolume); },
+    [] { return SystemSettings::instance().getYMF288RhythmVolume(); },
+    [](UpdateContext&, auto v) {
+        SystemSettings::instance().setYMF288RhythmVolume(v);
+        SystemSettings::instance().applyYMF288Volume();
+    },
+    [](auto v) { return toString(v * 0.75f) + "dB"; },
+    {0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12});
+
 ListItem<RepeatMode, 3> repeatModeItem(
     [] { return get(strings::repeatMode); },
     [] { return SystemSettings::instance().getRepeatMode(); },
@@ -396,11 +461,15 @@ SettingWindow::SettingWindow()
     append(&loopCountItem);
     append(&shuffleModeItem);
     append(&repeatModeItem);
+    append(&ymf288FMVolumeItem);
+    append(&ymf288RhythmVolumeItem);
     append(&backLightItem);
     append(&internalSpeakerItem);
     append(&internalSpeaker3rdDeltaSigmaModeItem);
     append(&playerDialModeItem);
     append(&dispOffReverseItem);
+    append(&neoPixelModeItem);
+    append(&neoPixelBrightnessItem);
     append(&btAudioMenuItem);
     append(&bootBTAudioItem);
     append(&bootBTMIDIItem);

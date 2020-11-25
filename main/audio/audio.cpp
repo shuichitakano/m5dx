@@ -22,6 +22,8 @@
 //
 #include <driver/i2s.h>
 
+#define ENABLE_FMDATA_DEBUG 0
+
 namespace audio
 {
 namespace
@@ -74,9 +76,10 @@ public:
         cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
         cfg.communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S_MSB);
         cfg.intr_alloc_flags     = 0;
-        cfg.dma_buf_count        = 2;
-        cfg.dma_buf_len          = 128 << overSampleShift_;
-        cfg.use_apll             = false;
+        //        cfg.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL2;
+        cfg.dma_buf_count = 2;
+        cfg.dma_buf_len   = 128 << overSampleShift_;
+        cfg.use_apll      = false;
 
         auto r = i2s_driver_install(port_, &cfg, 0, nullptr);
         assert(r == ESP_OK);
@@ -232,16 +235,42 @@ public:
     }
 };
 
+#if ENABLE_FMDATA_DEBUG
+uint32_t debugRawFMData_[4];
+uint32_t debugSRCFMData_[4];
+#endif
+
+void
+dumpFMDataDebug()
+{
+#if ENABLE_FMDATA_DEBUG
+    printf("raw: %08x %08x %08x %08x\n",
+           debugRawFMData_[0],
+           debugRawFMData_[1],
+           debugRawFMData_[2],
+           debugRawFMData_[3]);
+    printf("SRC: %08x %08x %08x %08x\n",
+           debugSRCFMData_[0],
+           debugSRCFMData_[1],
+           debugSRCFMData_[2],
+           debugSRCFMData_[3]);
+#endif
+}
+
 ////
 class FMOutputHandler
 {
     static constexpr i2s_port_t port_ = I2S_NUM_1;
     uint32_t sampleRate_              = 62500;
 
-    static constexpr size_t BUFFER_SIZE = UNIT_SAMPLE_COUNT * 2 * 2;
+    static constexpr size_t MAX_UPDATE_SAMPLE_COUNT = UNIT_SAMPLE_COUNT * 2;
+    static constexpr size_t BUFFER_SIZE = MAX_UPDATE_SAMPLE_COUNT * 2;
     int16_t buffer_[BUFFER_SIZE];
     util::RingBuffer<int16_t> ring_{buffer_, BUFFER_SIZE};
     SimpleLinearSamplingRateConverter src_;
+
+    int bytesPerSample_  = 4;
+    int unitReadSamples_ = 128;
 
 public:
     FMOutputHandler();
@@ -260,24 +289,34 @@ public:
     void read(uint32_t* buf, size_t n)
     {
         size_t bytesRead;
-        i2s_read(port_, buf, n << 2, &bytesRead, portMAX_DELAY);
+        i2s_read(port_, buf, n * bytesPerSample_, &bytesRead, portMAX_DELAY);
     }
 
     size_t decode(uint32_t* buf, size_t n)
     {
         n = std::min<size_t>(n, ring_.getWritableSize() >> 1);
-        decodeYM3012Sample(ring_.getWritePointer(), buf, n);
+        // decodeYM3012Sample(ring_.getWritePointer(), buf, n);
+        decodeYMF288Sample(ring_.getWritePointer(), buf, n);
         ring_.advanceWritePointer(n << 1);
         return n;
     }
 
     void updateRing(size_t n)
     {
-        uint32_t tmp[UNIT_SAMPLE_COUNT * 2];
+        uint32_t tmp[MAX_UPDATE_SAMPLE_COUNT];
+        assert(n * bytesPerSample_ <=
+               MAX_UPDATE_SAMPLE_COUNT * sizeof(uint32_t));
         read(tmp, n);
 
         auto ct = decode(tmp, n);
-        ct      = decode(tmp + ct, n - ct);
+        ct      = decode(tmp + ct * (bytesPerSample_ >> 2), n - ct);
+
+#if ENABLE_FMDATA_DEBUG
+        debugRawFMData_[0] = tmp[0];
+        debugRawFMData_[1] = tmp[1];
+        debugRawFMData_[2] = tmp[2];
+        debugRawFMData_[3] = tmp[3];
+#endif
     }
 
     bool accum(std::array<int32_t, 2>* data, size_t nSamples, size_t sampleRate)
@@ -286,9 +325,22 @@ public:
         int updateCt = sourceCt - (ring_.getFullReadableSize() >> 1);
         if (updateCt > 0)
         {
-            updateRing(updateCt);
+            int ct = std::min(updateCt, unitReadSamples_);
+            updateRing(ct);
+
+            ct = updateCt - ct;
+            if (ct)
+            {
+                updateRing(ct);
+            }
         }
         bool r = src_.convertAccum(data, nSamples, ring_);
+#if ENABLE_FMDATA_DEBUG
+        debugSRCFMData_[0] = data[0][0];
+        debugSRCFMData_[1] = data[0][1];
+        debugSRCFMData_[2] = data[1][0];
+        debugSRCFMData_[3] = data[1][1];
+#endif
         return r;
     }
 
@@ -308,24 +360,25 @@ FMOutputHandler::FMOutputHandler()
         cfg.mode        = i2s_mode_t(I2S_MODE_SLAVE | I2S_MODE_RX);
         cfg.sample_rate = sampleRate_;
         // cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;
-        cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+        // cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+        cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_24BIT;
         // cfg.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
         cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
-        //        cfg.communication_format =
-        //        i2s_comm_format_t(I2S_COMM_FORMAT_PCM |
-        //        I2S_COMM_FORMAT_PCM_SHORT); cfg.communication_format =
-        //        i2s_comm_format_t(I2S_COMM_FORMAT_PCM);
         cfg.communication_format =
             i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB);
         cfg.intr_alloc_flags = 0;
-        cfg.dma_buf_count    = 4;
-        cfg.dma_buf_len      = 128; // sample数
+        //        cfg.intr_alloc_flags = ESP_INTR_FLAG_LEVEL3;
+        cfg.dma_buf_count = 4;
+        cfg.dma_buf_len   = 128; // sample数
         // 64sampleで1.024ms
         cfg.use_apll = false;
 
         //        auto r = i2s_driver_install(port_, &cfg, 2, &queue_);
         auto r = i2s_driver_install(port_, &cfg, 0, nullptr);
         assert(r == ESP_OK);
+
+        bytesPerSample_  = 8;
+        unitReadSamples_ = MAX_UPDATE_SAMPLE_COUNT * 4 / bytesPerSample_;
     }
 
     {
@@ -339,6 +392,7 @@ FMOutputHandler::FMOutputHandler()
         assert(r == ESP_OK);
     }
 
+    // YM2151:
     // 4018
     //  010 000000001 1 000
     // ^000 000000000 1 111
@@ -346,6 +400,9 @@ FMOutputHandler::FMOutputHandler()
 
     // idle状態の波形から観測
     // 0010000000001100
+
+    // YMF288:
+    // 24bitの後半16bitに符号付きPCM
 }
 
 ////////////////////////////////
@@ -407,12 +464,14 @@ setInternalSpeaker3rdDeltaSigmaMode(bool f)
 void
 initialize()
 {
-    target::startFMClock(4000000);
+    //    target::startFMClock(4000000);
+    target::startFMClock(8000000);
     resetSoundChip(); // FMOutputHandlerを動かす前に
 
     InternalSpeakerOut::instance(); // init
     FMOutputHandler::instance();    // init
-    setFMClock(4000000, 64);
+                                    //    setFMClock(4000000, 64);
+    setFMClock(8000000, 144);
 
     AudioOutDriverManager::instance().setAudioStreamOut(&streamOutHandler_);
     attachInternalSpeaker();

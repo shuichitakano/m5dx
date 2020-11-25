@@ -87,6 +87,17 @@ constexpr Strings BTAudioConnectMes = {"'%s' に接続しています...",
 
 constexpr Strings BTMIDI = {"Bluetooth MIDI", "BT MIDI"};
 
+constexpr Strings YMF288FMVolume     = {"YMF288 FM 音量", "YMF288 FM VOLUME"};
+constexpr Strings YMF288RhythmVolume = {"YMF288 リズム音量",
+                                        "YMF288 RHYTHM VOLUME"};
+
+constexpr Strings NeoPixelMode = {"Neo Pixel モード", "NEO PIXEL MODE"};
+constexpr Strings NeoPixelBrightness = {"Neo Pixel 明度",
+                                        "NEO PIXEL BRIGHTNESS"};
+constexpr Strings simpleLvMeter      = {"レベルメーター", "LEVEL METER"};
+constexpr Strings gamingLvMeter = {"GAMING? LV メーター", "GAMING LEVEL METER"};
+constexpr Strings spectrumMeter = {"スペクトルメーター", "SPECTRUM METER"};
+
 } // namespace strings
 
 } // namespace ui

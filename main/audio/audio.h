@@ -17,6 +17,8 @@ void setFMVolume(float v);
 void attachInternalSpeaker();
 void setInternalSpeaker3rdDeltaSigmaMode(bool f);
 
+void dumpFMDataDebug();
+
 // const int16_t* getRecentSampleForTest();
 
 } // namespace audio

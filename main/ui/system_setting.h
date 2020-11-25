@@ -46,6 +46,14 @@ enum class DeltaSigmaMode
     ORDER_3RD,
 };
 
+enum class NeoPixelMode
+{
+    OFF,
+    SIMPLE_LV,
+    GAMING_LV,
+    SPECTRUM,
+};
+
 struct TrackSetting
 {
     bool mask_     = true;
@@ -90,6 +98,11 @@ class SystemSettings
     //    PlayerDialMode playerDial_     = PlayerDialMode::VOLUME;
     PlayerDialMode playerDial_     = PlayerDialMode::TRACK_SELECT;
     DeltaSigmaMode deltaSigmaMode_ = DeltaSigmaMode::ORDER_3RD;
+    int ymf288FMVol_               = -8; // -6dB
+    int ymf288RhythmVol_           = -8;
+    //    NeoPixelMode neoPixelMode_     = NeoPixelMode::OFF;
+    NeoPixelMode neoPixelMode_ = NeoPixelMode::SPECTRUM;
+    int neoPixelBrightness_    = 20;
 
     TrackSetting trackSetting_[100];
 
@@ -127,6 +140,12 @@ public:
     bool isEnabledDisplayOffIfReverse() const { return displayOffIfReverse_; }
     void enableDisplayOffIfReverse(bool f) { displayOffIfReverse_ = f; }
 
+    int getYMF288FMVolume() const { return ymf288FMVol_; }
+    void setYMF288FMVolume(int v) { ymf288FMVol_ = v; }
+
+    int getYMF288RhythmVolume() const { return ymf288RhythmVol_; }
+    void setYMF288RhythmVolume(int v) { ymf288RhythmVol_ = v; }
+
     bool getTrackMask(size_t i) const { return trackSetting_[i].mask_; }
     void setTrackMask(size_t i, bool f) { trackSetting_[i].mask_ = f; }
 
@@ -136,12 +155,21 @@ public:
     PlayerDialMode getPlayerDialMode() const { return playerDial_; }
     void setPlayerDialMode(PlayerDialMode m) { playerDial_ = m; }
 
+    NeoPixelMode getNeoPixelMode() const { return neoPixelMode_; }
+    void setNeoPixelMode(NeoPixelMode m) { neoPixelMode_ = m; }
+
+    int getNeoPixelBrightness() const { return neoPixelBrightness_; }
+    void setNeoPixelBrightness(int v) { neoPixelBrightness_ = v; }
+
     BluetoothAudio& getBluetoothAudio() { return btAudio_; }
     BluetoothMIDI& getBluetoothMIDI() { return btMIDI_; }
 
     //
     void applyBackLightIntensity() const;
     void applyDeltaSigmaMode() const;
+    void applyYMF288Volume() const;
+
+    void apply() const;
 
     static SystemSettings& instance();
 };
@@ -152,6 +180,7 @@ const char* toString(RepeatMode m);
 const char* toString(PlayerDialMode m);
 const char* toString(DeltaSigmaMode m);
 const char* toString(InitialBTMode m);
+const char* toString(NeoPixelMode m);
 
 } // namespace ui
 

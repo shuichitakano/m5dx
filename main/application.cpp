@@ -7,6 +7,7 @@
 
 #include "debug.h"
 #include "target.h"
+#include <audio/audio.h>
 #include <audio/audio_out.h>
 #include <graphics/bmp.h>
 #include <graphics/display.h>
@@ -87,6 +88,8 @@ public:
         uiManager_.push(controlBar_, {0, 232});
         std::make_shared<ui::PlayerWindow>()->show(uiManager_);
 
+        ui::SystemSettings::instance().apply();
+
         currentTimer_ = sys::millis();
     }
 
@@ -139,6 +142,8 @@ public:
             uiManager_.render(ctx);
 
             drawDebug(ctx);
+
+            audio::dumpFMDataDebug();
         }
     }
 

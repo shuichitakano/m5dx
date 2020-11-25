@@ -1,5 +1,4 @@
 #include "target.h"
-#include <Adafruit_NeoPixel.h>
 #include <SD.h>
 #include <array>
 #include <audio/audio.h>
@@ -30,22 +29,15 @@
 #include <io/bt_a2dp_source_manager.h>
 #include <system/job_manager.h>
 
-#include <graphics/bmp.h>
 #include <util/binary.h>
 
-#define M5STACK_FIRE_NEO_NUM_LEDS 10
-#define M5STACK_FIRE_NEO_DATA_PIN 15
-
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(
-    M5STACK_FIRE_NEO_NUM_LEDS, M5STACK_FIRE_NEO_DATA_PIN, NEO_GRB + NEO_KHZ800);
+#include <audio/sound_chip_manager.h>
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
-
-DEF_LINKED_BINARY(m5dx_material_bmp);
 
 namespace
 {
@@ -71,12 +63,12 @@ setup()
         Serial.println("Card Mount Failed");
     }
 
-    pixels.begin();
+    // pixels.begin();
 
     //    delay(500);
 
     target::initGPIO();
-    target::restoreBus();
+    target::restoreBus(false);
 
     //    dacWrite(25, 0);
     dac_output_disable(DAC_CHANNEL_1);
@@ -93,14 +85,6 @@ setup()
 
     auto moduleID = M5DX::readModuleID();
     DBOUT(("module id = %d\n", (int)moduleID));
-
-    //
-    auto bmp = GET_LINKED_BINARY_T(graphics::BMP, m5dx_material_bmp);
-    DBOUT(("bmp = %p, bits = %p, (%dx%d)\n",
-           bmp,
-           bmp->getBits(),
-           bmp->getWidth(),
-           bmp->getHeight()));
 
     // bt
 
@@ -127,6 +111,8 @@ setup()
     //
 
     M5DX::initialize();
+
+    audio::resetSoundChip();
 
     ///
 
@@ -239,19 +225,6 @@ loop()
             io::BLEMidiClient::instance().put(m);
         }
     }
-
-#if 0
-    static int pixelNumber = 0; // = random(0, M5STACK_FIRE_NEO_NUM_LEDS - 1);
-    pixelNumber++;
-    if (pixelNumber > 9)
-        pixelNumber = 0;
-    int r = 1 << random(0, 7);
-    int g = 1 << random(0, 7);
-    int b = 1 << random(0, 7);
-
-    pixels.setPixelColor(pixelNumber, pixels.Color(r, g, b));
-    pixels.show();
-#endif
 
     delay(1);
 }

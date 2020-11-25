@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include <audio/audio.h>
+#include <audio/sound_chip_manager.h>
 #include <graphics/display.h>
 
 namespace ui
@@ -192,6 +193,25 @@ toString(InitialBTMode m)
     }
 }
 
+const char*
+toString(NeoPixelMode m)
+{
+    switch (m)
+    {
+    default:
+        return get(strings::disable);
+
+    case NeoPixelMode::SIMPLE_LV:
+        return get(strings::simpleLvMeter);
+
+    case NeoPixelMode::GAMING_LV:
+        return get(strings::gamingLvMeter);
+
+    case NeoPixelMode::SPECTRUM:
+        return get(strings::spectrumMeter);
+    }
+}
+
 ////
 void
 SystemSettings::applyBackLightIntensity() const
@@ -205,6 +225,21 @@ SystemSettings::applyDeltaSigmaMode() const
 {
     audio::setInternalSpeaker3rdDeltaSigmaMode(deltaSigmaMode_ ==
                                                DeltaSigmaMode::ORDER_3RD);
+}
+
+void
+SystemSettings::applyYMF288Volume() const
+{
+    audio::setYMF288FMVolume(ymf288FMVol_);
+    audio::setYMF288RhythmVolume(ymf288RhythmVol_);
+}
+
+void
+SystemSettings::apply() const
+{
+    applyBackLightIntensity();
+    applyDeltaSigmaMode();
+    applyYMF288Volume();
 }
 
 } // namespace ui

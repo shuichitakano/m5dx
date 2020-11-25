@@ -1,61 +1,49 @@
 ﻿/* -*- mode:C++; -*-
  *
- * ymf288.cxx
- *
  * author(s) : Shuichi TAKANO
  * since 2015/04/27(Mon) 00:46:59
- *
- * $Id$
- */
-
-/*
- * include
  */
 
 #include "ymf288.h"
-#include <diag/Trace.h>
+#include <audio/sound_chip.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <stm32f4xx_hal.h>
-
-/*
- * code
- */
 
 namespace sound_sys
 {
 
 YMF288::YMF288()
-    : chip_(0)
 {
     currentReg_[0] = 0;
     currentReg_[1] = 0;
     memset(regCache_, 0, sizeof(regCache_));
     for (auto& inst : chInst_)
+    {
         inst = -1;
+    }
 
-    sysInfo_.channelCount              = 15;
-    sysInfo_.systemID                  = SoundSystem::SYSTEM_OPNA;
+    sysInfo_.channelCount = 15;
+    sysInfo_.systemID     = SoundSystem::SYSTEM_YMF288;
+
     static constexpr SystemID sysIDs[] = {
-        SoundSystem::SYSTEM_PSG,
-        SoundSystem::SYSTEM_PSG,
-        SoundSystem::SYSTEM_PSG,
+        SoundSystem::SYSTEM_YMF288, // PSG
+        SoundSystem::SYSTEM_YMF288, // PSG
+        SoundSystem::SYSTEM_YMF288, // PSG
 
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
 
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
-        SoundSystem::SYSTEM_OPNA,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
+        SoundSystem::SYSTEM_YMF288,
     };
     sysInfo_.systemIDPerCh      = sysIDs;
     sysInfo_.oneShotChannelMask = 63 << 9;
@@ -123,18 +111,24 @@ void
 YMF288::setValue(int addr, int v)
 {
     if ((addr & 1) == 0)
+    {
         currentReg_[addr >> 1] = v;
+    }
     else
     {
         int reg        = addr & 2 ? 0x100 + currentReg_[1] : currentReg_[0];
         bool r         = state_.update(reg, v, regCache_);
         regCache_[reg] = v;
         if (!r)
+        {
             return;
+        }
     }
 
     if (chip_)
+    {
         chip_->setValue(addr, v);
+    }
 }
 
 int
@@ -152,14 +146,30 @@ YMF288::setClock(int clock)
     return sysInfo_.actualClock;
 }
 
-const char*
-YMF288::getStatusString(int ch, char* buf, int n) const
+void
+YMF288::allKeyOff()
 {
-    return state_.getStatusString(ch, buf, n, regCache_);
+    auto set = [&](int r, int v) {
+        setValue(0, r);
+        setValue(1, v);
+    };
+
+    set(0x7, 63);
+    set(0x8, 0);
+    set(0x9, 0);
+    set(0xa, 0);
+    set(0x10, 0x80 + 63);
+    for (int i = 0; i < 7; ++i)
+    {
+        set(0x28, i);
+    }
 }
 
-} /* namespace sound_sys */
+// void
+// YMF288::reset()
+// {
+//     setValue(0x11, 0);
+//     allKeyOff();
+// }
 
-/*
- * End of ymf288.cxx
- */
+} /* namespace sound_sys */

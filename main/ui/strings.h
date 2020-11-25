@@ -76,6 +76,15 @@ extern const Strings BTAudio;
 extern const Strings BTAudioConnectMes;
 extern const Strings BTMIDI;
 
+extern const Strings YMF288FMVolume;
+extern const Strings YMF288RhythmVolume;
+
+extern const Strings NeoPixelMode;
+extern const Strings NeoPixelBrightness;
+extern const Strings simpleLvMeter;
+extern const Strings gamingLvMeter;
+extern const Strings spectrumMeter;
+
 } // namespace strings
 
 } // namespace ui

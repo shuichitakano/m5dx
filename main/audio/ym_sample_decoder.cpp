@@ -56,4 +56,21 @@ decodeYM3012Sample(int16_t* dst, const uint32_t* src, size_t count)
     }
 }
 
+void
+decodeYMF288Sample(int16_t* dst, const uint32_t* src, size_t count)
+{
+    while (count)
+    {
+        dst[0] = (src[0] >> 8);
+        dst[1] = (src[1] >> 8);
+        // dst[0] = (src[0] >> 8) - 32768;
+        // dst[1] = (src[1] >> 8) - 32768;
+        // dst[1] = 32767 - (src[1] >> 8);
+
+        src += 2;
+        dst += 2;
+        --count;
+    }
+}
+
 } // namespace audio

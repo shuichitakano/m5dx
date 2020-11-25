@@ -84,7 +84,8 @@ SWPCM8::stop(int ch)
     nextKeyOff_ |= 1 << ch;
 }
 
-void SWPCM8::accumSamples(std::array<int32_t, 2>* buffer, uint32_t samples)
+void
+SWPCM8::accumSamples(std::array<int32_t, 2>* buffer, uint32_t samples)
 {
     if (!samples)
     {
@@ -304,12 +305,6 @@ SWPCM8::getEnabledChannels() const
         }
     }
     return r;
-}
-
-const char*
-SWPCM8::getStatusString(int ch, char* buf, int n) const
-{
-    return "";
 }
 
 void
