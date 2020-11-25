@@ -79,7 +79,7 @@ namespace col
 {
 constexpr uint32_t panel      = 0x202020;
 constexpr uint32_t titleFont  = 0xffffff;
-constexpr uint32_t icon       = 0xa0a0a0;
+constexpr uint32_t icon       = 0xd0d0d0;
 constexpr uint32_t statusFont = 0xc0c0c0;
 constexpr uint32_t wave       = 0xd0d0d0;
 constexpr uint32_t freqLine   = 0xb0b0b0;
@@ -112,7 +112,9 @@ PlayerWindow::show(UIManager& m)
 void
 PlayerWindow::onUpdate(UpdateContext& ctx)
 {
-    volVisible_ = std::max(0.0f, volVisible_ - ctx.getDeltaT());
+    float dt    = ctx.getDeltaT();
+    currentDt_  = dt;
+    volVisible_ = std::max(0.0f, volVisible_ - dt);
 
     auto* bt        = ctx.getButtonTip();
     auto* uiManager = ctx.getUIManager();
@@ -414,6 +416,8 @@ PlayerWindow::onRender(RenderContext& ctx)
         ctx.applyClipRegion();
         ctx.fill({0, 0}, rect::waveFB.size, col::panel);
 
+        std::array<float, 2> total{};
+
         static int16_t waveBuffer[256];
 
         auto& audioManager = audio::AudioOutDriverManager::instance();
@@ -438,6 +442,7 @@ PlayerWindow::onRender(RenderContext& ctx)
                 r,
                 [&](int) {
                     int v = (*wave * scale + bias) >> 16;
+                    total[ch] += *wave * *wave;
                     wave += 2;
                     return v;
                 },
@@ -459,6 +464,8 @@ PlayerWindow::onRender(RenderContext& ctx)
         audioManager.unlockHistoryBuffer();
 
         util::realFFT(waveBuffer, util::sincos256Table, 256);
+        waveBuffer[0]   = 0;
+        waveBuffer[255] = 0;
 
         // サンプルは 44100/3=14700Hz
         // 14700/256 = 57.421875Hzステップで7350Hzまで
@@ -500,6 +507,11 @@ PlayerWindow::onRender(RenderContext& ctx)
             true,
             ctx.makeColor(col::freqLine),
             ctx.makeColor(col::freqBar));
+
+        // neo pix
+        float lvs = 1.0f / (32768.0f * 32768.0f * 128.0f);
+        std::array<float, 2> lv{total[0] * lvs, total[1] * lvs};
+        neoPixelDisp_.update(lv, waveBuffer, 256, currentDt_);
 
         // vol
         if (volVisible_ > 0)

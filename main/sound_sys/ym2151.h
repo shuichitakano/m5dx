@@ -34,11 +34,11 @@ class YM2151 final : public SoundSystem
 public:
     YM2151();
 
-    inline void setChip(audio::SoundChipBase* c) { chip_ = c; }
+    void setChip(audio::SoundChipBase* c) { chip_ = c; }
     audio::SoundChipBase* detachChip()
     {
         auto t = chip_;
-        chip_  = 0;
+        chip_  = nullptr;
         return t;
     }
 
@@ -52,18 +52,13 @@ public:
     uint32_t getKeyOnChannels() const override;
     uint32_t getKeyOnTrigger() override;
     uint32_t getEnabledChannels() const override;
-    const char* getStatusString(int ch, char* buf, int n) const override;
 
-    // AudioChipBase
     void setValue(int addr, int v);
     int getValue(int addr);
     int setClock(int clock);
 
-    inline void setInstrumentNumber(int ch, int n) { chInst_[ch] = n; }
+    void setInstrumentNumber(int ch, int n) { chInst_[ch] = n; }
 };
-
-// extern YM2151 ym2151Inst_[1];
-// inline YM2151& getYM2151 (int id = 0)	{ return ym2151Inst_[id]; }
 
 } /* namespace sound_sys */
 

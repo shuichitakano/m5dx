@@ -59,7 +59,8 @@ public:
         semaphore_ = xSemaphoreCreateBinary();
         assert(semaphore_);
 
-        constexpr int prio = 20;
+        constexpr int prio = 21;
+        // constexpr int prio = configMAX_PRIORITIES - 2;
         auto r =
             xTaskCreate(timerTaskEntry, "timer", 4096, this, prio, nullptr);
         assert(r);
@@ -213,6 +214,12 @@ void
 setTimerCallback(std::function<void()>&& f)
 {
     timer0_.setCallback(std::move(f));
+}
+
+void
+resetTimerCallback()
+{
+    timer0_.setCallback({});
 }
 
 } // namespace sys

@@ -8,6 +8,7 @@
 #include "play_list.h"
 #include <debug.h>
 #include <music_player/mdxplayer.h>
+#include <music_player/s98player.h>
 #include <mutex>
 #include <string>
 #include <system/mutex.h>
@@ -20,8 +21,9 @@ namespace
 {
 
 MDXPlayer mdxPlayer_;
+S98Player s98Player_;
 
-MusicPlayer* musicPlayers_[] = {&mdxPlayer_};
+MusicPlayer* musicPlayers_[] = {&mdxPlayer_, &s98Player_};
 
 MusicPlayer* activeMusicPlayer_ = {};
 std::string currentPlayListFile_;

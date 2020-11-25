@@ -16,9 +16,6 @@ public:
     virtual void setValue(int addr, int v) = 0;
     virtual int getValue(int addr)         = 0;
     virtual int setClock(int clock)        = 0;
-
-    virtual void activate()   = 0;
-    virtual void deactivate() = 0;
 };
 
 } // namespace audio

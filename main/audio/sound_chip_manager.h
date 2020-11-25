@@ -14,6 +14,12 @@ namespace audio
 SoundChipBase* allocateYM2151();
 void freeYM2151(SoundChipBase* p);
 
+SoundChipBase* allocateYMF288();
+void freeYMF288(SoundChipBase* p);
+
+void setYMF288FMVolume(int adj);
+void setYMF288RhythmVolume(int adj);
+
 void resetSoundChip();
 
 } // namespace audio

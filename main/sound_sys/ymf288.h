@@ -1,33 +1,20 @@
 ﻿/* -*- mode:C++; -*-
  *
- * ymf288.h
- *
  * author(s) : Shuichi TAKANO
  * since 2015/04/27(Mon) 00:47:56
- *
- * $Id$
  */
-#ifndef _SoundSys_YMF288_HF8633FE8C1AF42729D5F9F2E047B41A8
-#define _SoundSys_YMF288_HF8633FE8C1AF42729D5F9F2E047B41A8
+#ifndef _70DE98BE_D134_3E2C_41D3_ABDC2228B9DD
+#define _70DE98BE_D134_3E2C_41D3_ABDC2228B9DD
 
-/**
- * @file
- * @brief
- */
-
-/*
- * include
- */
-
-#include "../audio_chip_base.h"
-#include "../audio_system.h"
+#include "sound_system.h"
 #include <stdint.h>
 
 #include "opna_common.h"
 
-/*
- * class
- */
+namespace audio
+{
+class SoundChipBase;
+}
 
 namespace sound_sys
 {
@@ -40,42 +27,44 @@ class YMF288 : public SoundSystem
     uint16_t currentReg_[2];
     int16_t chInst_[16];
 
-    AudioChipBase* chip_;
+    audio::SoundChipBase* chip_{};
     SystemInfo sysInfo_;
 
 public:
     YMF288();
 
-    inline void setChip(AudioChipBase* c) { chip_ = c; }
-    AudioChipBase* detachChip()
+    void setChip(audio::SoundChipBase* c) { chip_ = c; }
+    audio::SoundChipBase* detachChip()
     {
         auto t = chip_;
-        chip_  = 0;
+        chip_  = nullptr;
         return t;
     }
 
     // SoundSystem
-    virtual const SystemInfo& getSystemInfo() const;
-    virtual float getNote(int ch, int) const;
-    virtual float getVolume(int ch) const;
-    virtual float getPan(int ch) const;
-    virtual int getInstrument(int ch) const;
-    virtual bool mute(int ch, bool f);
-    virtual uint32_t getKeyOnChannels() const;
-    virtual uint32_t getKeyOnTrigger();
-    virtual uint32_t getEnabledChannels() const;
-    virtual const char* getStatusString(int ch, char* buf, int n) const;
+    float getNote(int ch, int) const override;
+    const SystemInfo& getSystemInfo() const override;
+    float getVolume(int ch) const override;
+    float getPan(int ch) const override;
+    int getInstrument(int ch) const override;
+    bool mute(int ch, bool f) override;
+    uint32_t getKeyOnChannels() const override;
+    uint32_t getKeyOnTrigger() override;
+    uint32_t getEnabledChannels() const override;
 
+    // SoundChipBase
     void setValue(int addr, int v);
     int getValue(int addr);
     int setClock(int clock);
 
-    inline void setInstrumentNumber(int ch, int n) { chInst_[ch] = n; }
+    void allKeyOff();
+    // virtual void reset() = 0;
+    //    virtual void keyOn(int ch, int note, int fine) = 0;
+    //    virtual void keyOff(int ch, int note)          = 0;
+
+    void setInstrumentNumber(int ch, int n) { chInst_[ch] = n; }
 };
 
 } /* namespace sound_sys */
 
-#endif /* _SoundSys_YMF288_HF8633FE8C1AF42729D5F9F2E047B41A8 */
-/*
- * End of ymf288.h
- */
+#endif /* _70DE98BE_D134_3E2C_41D3_ABDC2228B9DD */

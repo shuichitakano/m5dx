@@ -26,7 +26,8 @@ initGPIO()
         cnf.pin_bit_mask = ( //
             (_1 << config::D0) | (_1 << config::D1) | (_1 << config::D2) |
             (_1 << config::D3) | (_1 << config::D4) | (_1 << config::D7) |
-            (_1 << config::CS) | (_1 << config::A0) | 0);
+            (_1 << config::CS) | (_1 << config::A0) |
+            (_1 << config::NEO_PIXEL_DATA) | 0);
         cnf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         cnf.pull_up_en   = GPIO_PULLUP_DISABLE;
         cnf.intr_type    = GPIO_INTR_DISABLE;
@@ -75,7 +76,7 @@ unlockBus()
 }
 
 void
-setupBus()
+setupBus(bool useA1)
 {
     lockBus();
 
@@ -85,14 +86,28 @@ setupBus()
 
     pinMode(config::D3, OUTPUT);
     gpio_matrix_out(config::D3, SIG_GPIO_OUT_IDX, false, false);
+
+    if (useA1)
+    {
+        // ESP32側RXDとUSB側TXDが470Ωで接続されている
+        // 極性が違うと7mA程度流れる
+        pinMode(config::A1, OUTPUT);
+        gpio_matrix_out(config::A1, SIG_GPIO_OUT_IDX, false, false);
+    }
 }
 
 void
-restoreBus()
+restoreBus(bool useA1)
 {
     gpio_matrix_out(config::D7, VSPID_OUT_IDX, false, false);
     gpio_matrix_out(config::D2, VSPICLK_OUT_IDX, false, false);
     gpio_matrix_out(config::D0, U0TXD_OUT_IDX, false, false);
+
+    if (useA1)
+    {
+        pinMode(config::A1, INPUT);
+        gpio_matrix_in(config::A1, U0RXD_IN_IDX, false);
+    }
 
     pinMode(config::D3, INPUT);
     gpio_matrix_in(config::D3, VSPIQ_OUT_IDX, false);
@@ -168,6 +183,12 @@ void
 setFMA0(int i)
 {
     gpio_set_level((gpio_num_t)config::A0, i);
+}
+
+void
+setFMA1(int i)
+{
+    gpio_set_level((gpio_num_t)config::A1, i);
 }
 
 bool

@@ -20,7 +20,6 @@ YM2151::YM2151()
     , chKeyOnTrigger_(0)
     , currentReg_(0)
     , keyShift_(0)
-    , chip_(0)
 {
     memset(regCache_, 0, sizeof(regCache_));
     for (auto& inst : chInst_)
@@ -191,21 +190,19 @@ YM2151::setClock(int clock)
     return sysInfo_.actualClock;
 }
 
-const char*
-YM2151::getStatusString(int ch, char* buf, int n) const
-{
-    snprintf(buf,
-             n,
-             "KC%02X KF%02X CON%d FL%d PMS%d AMS%d",
-             regCache_[ch + 0x28],
-             regCache_[ch + 0x30] >> 2,
-             regCache_[ch + 0x20] & 7,
-             (regCache_[ch + 0x20] >> 3) & 7,
-             (regCache_[ch + 0x38] >> 4) & 7,
-             (regCache_[ch + 0x38]) & 3);
-    return buf;
-}
-
-// YM2151 ym2151Inst_[1];
+// const char*
+// YM2151::getStatusString(int ch, char* buf, int n) const
+// {
+//     snprintf(buf,
+//              n,
+//              "KC%02X KF%02X CON%d FL%d PMS%d AMS%d",
+//              regCache_[ch + 0x28],
+//              regCache_[ch + 0x30] >> 2,
+//              regCache_[ch + 0x20] & 7,
+//              (regCache_[ch + 0x20] >> 3) & 7,
+//              (regCache_[ch + 0x38] >> 4) & 7,
+//              (regCache_[ch + 0x38]) & 3);
+//     return buf;
+// }
 
 } /* namespace sound_sys */

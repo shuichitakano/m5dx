@@ -24,11 +24,14 @@ constexpr int D7 = 23;
 
 constexpr int CS  = 13;
 constexpr int A0  = 12;
+constexpr int A1  = 3;
 constexpr int CLK = 0;
 
 constexpr int SD_CLK  = 26;
 constexpr int SD_DATA = 35;
 constexpr int SD_WS   = 36;
+
+constexpr int NEO_PIXEL_DATA = 15;
 
 constexpr int BUTTON_A = 39;
 constexpr int BUTTON_B = 38;
@@ -37,8 +40,8 @@ constexpr int BUTTON_C = 37;
 } // namespace config
 
 void initGPIO();
-void setupBus();
-void restoreBus();
+void setupBus(bool useA1);
+void restoreBus(bool useA1);
 
 void startFMClock(uint32_t freq);
 
@@ -49,6 +52,7 @@ void negateFMCS();
 void assertFMCS();
 
 void setFMA0(int i);
+void setFMA1(int i);
 
 bool getButtonA();
 bool getButtonB();

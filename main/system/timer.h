@@ -21,6 +21,7 @@ void disableTimerInterrupt();
 
 void setTimerPeriod(int v, bool autoUpdate);
 void setTimerCallback(std::function<void()>&& func);
+void resetTimerCallback();
 
 } // namespace sys
 
