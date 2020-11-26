@@ -11,11 +11,14 @@
 namespace audio
 {
 
-void initialize();
-void setFMClock(uint32_t freq, int sampleRateDiv);
+void startFMAudio();
+void setFMClock(uint32_t freq);
 void setFMVolume(float v);
 void attachInternalSpeaker();
 void setInternalSpeaker3rdDeltaSigmaMode(bool f);
+
+void setFMAudioModeYM2151();
+void setFMAudioModeYMF288();
 
 void dumpFMDataDebug();
 
