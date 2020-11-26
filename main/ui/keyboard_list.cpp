@@ -120,6 +120,7 @@ KeyboardList::onUpdate(UpdateContext& ctx)
                 ++itemIdx;
             }
         }
+        items_.resize(itemIdx);
     }
 
 #if 0

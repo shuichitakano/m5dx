@@ -22,6 +22,10 @@ void setYMF288RhythmVolume(int adj);
 
 void resetSoundChip();
 
+void attachYM2151();
+void atatchYMF288();
+void detachAllChip();
+
 } // namespace audio
 
 #endif /* _1F321D27_9133_F071_1F24_8F8A844D1FA3 */

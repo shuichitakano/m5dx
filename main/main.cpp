@@ -19,7 +19,6 @@
 #include <dirent.h>
 
 #include "application.h"
-#include "m5dx_module.h"
 
 #include <system/timer.h>
 
@@ -32,6 +31,7 @@
 #include <util/binary.h>
 
 #include <audio/sound_chip_manager.h>
+#include <ui/system_setting.h>
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -63,31 +63,30 @@ setup()
         Serial.println("Card Mount Failed");
     }
 
-    // pixels.begin();
-
-    //    delay(500);
-
     target::initGPIO();
     target::restoreBus(false);
 
     //    dacWrite(25, 0);
     dac_output_disable(DAC_CHANNEL_1);
 
-    audio::AudioOutDriverManager::instance().start();
-    audio::initialize();
-
-    // i2c test
+    // i2c initialize
     Wire.begin(21, 22);
+
+    // i2c 初期化後
+    ui::SystemSettings::instance().applySoundModuleType();
+
+    // SoundModule 確定後
+    audio::resetSoundChip();
+
+    // SoundChip 初期化後
+    audio::AudioOutDriverManager::instance().start();
+    audio::startFMAudio();
 
     IMU.calibrateMPU9250(IMU.gyroBias, IMU.accelBias);
     IMU.initMPU9250();
     IMU.initAK8963(IMU.magCalibration);
 
-    auto moduleID = M5DX::readModuleID();
-    DBOUT(("module id = %d\n", (int)moduleID));
-
     // bt
-
     if (!io::initializeBluetooth() || !io::BLEManager::instance().initialize())
     {
         DBOUT(("bluetooth initialize error."));

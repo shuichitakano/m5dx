@@ -168,6 +168,7 @@ public:
     void applyBackLightIntensity() const;
     void applyDeltaSigmaMode() const;
     void applyYMF288Volume() const;
+    void applySoundModuleType() const;
 
     void apply() const;
 

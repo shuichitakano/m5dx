@@ -7,6 +7,8 @@
 #include "strings.h"
 #include <algorithm>
 
+#include "../debug.h"
+#include "../m5dx_module.h"
 #include <audio/audio.h>
 #include <audio/sound_chip_manager.h>
 #include <graphics/display.h>
@@ -234,12 +236,60 @@ SystemSettings::applyYMF288Volume() const
     audio::setYMF288RhythmVolume(ymf288RhythmVol_);
 }
 
+namespace
+{
+
+void
+applySoundModule(M5DX::ModuleID id)
+{
+    switch (id)
+    {
+    case M5DX::ModuleID::YM2151:
+        audio::attachYM2151();
+        break;
+
+    case M5DX::ModuleID::YMF288:
+        audio::atatchYMF288();
+        break;
+
+    default:
+        audio::detachAllChip();
+        break;
+    }
+}
+
+} // namespace
+
+void
+SystemSettings::applySoundModuleType() const
+{
+    switch (soundModule_)
+    {
+    case SoundModule::AUTO:
+        applySoundModule(M5DX::readModuleID());
+        break;
+
+    case SoundModule::YM2151:
+        applySoundModule(M5DX::ModuleID::YM2151);
+        break;
+
+    case SoundModule::YMF288:
+        applySoundModule(M5DX::ModuleID::YMF288);
+        break;
+
+    default:
+        audio::detachAllChip();
+        break;
+    }
+}
+
 void
 SystemSettings::apply() const
 {
     applyBackLightIntensity();
     applyDeltaSigmaMode();
     applyYMF288Volume();
+    applySoundModuleType();
 }
 
 } // namespace ui
