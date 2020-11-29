@@ -13,7 +13,7 @@ namespace graphics
 namespace
 {
 constexpr int BACKLIGHT_PWM_CH = 7;
-constexpr int BACKLIGHT_FREQ   = 100000;
+constexpr int BACKLIGHT_FREQ   = 200000;
 
 } // namespace
 
