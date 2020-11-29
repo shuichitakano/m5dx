@@ -6,6 +6,7 @@
 #include "system_setting.h"
 #include "strings.h"
 #include <algorithm>
+#include <system/nvs.h>
 
 #include "../debug.h"
 #include "../m5dx_module.h"
@@ -290,6 +291,146 @@ SystemSettings::apply() const
     applyDeltaSigmaMode();
     applyYMF288Volume();
     applySoundModuleType();
+}
+
+namespace
+{
+constexpr const char* NVS_NAME = "M5DX";
+}
+
+void
+SystemSettings::storeToNVS() const
+{
+    DBOUT(("store settings to NVS\n"));
+    sys::NVSHandler nvs(NVS_NAME, true);
+    if (nvs)
+    {
+        nvs.setInt("lang", static_cast<int>(language_));
+        nvs.setInt("mod", static_cast<int>(soundModule_));
+        // nvs.setInt("vol", volume_);
+        nvs.setInt("loop", loopCount_);
+        nvs.setBool("shuf", shuffleMode_);
+        nvs.setInt("rep", static_cast<int>(repeatMode_));
+        nvs.setInt("blint", backLightIntensity_);
+        nvs.setBool("intsp", internalSpeaker_);
+        nvs.setBool("revdispoff", displayOffIfReverse_);
+        nvs.setInt("dial", static_cast<int>(playerDial_));
+        nvs.setInt("dsmode", static_cast<int>(deltaSigmaMode_));
+        nvs.setInt("288fmvol", ymf288FMVol_);
+        nvs.setInt("288ryvol", ymf288RhythmVol_);
+        nvs.setInt("neopixmode", static_cast<int>(neoPixelMode_));
+        nvs.setInt("neopixbl", neoPixelBrightness_);
+
+        btMIDI_.storeTo(nvs);
+        btAudio_.storeTo(nvs);
+    }
+}
+
+void
+SystemSettings::loadFromNVS()
+{
+    DBOUT(("load settings from NVS\n"));
+    sys::NVSHandler nvs(NVS_NAME, false);
+    if (nvs)
+    {
+        if (auto v = nvs.getInt("lang"))
+        {
+            language_ = static_cast<Language>(v.value());
+        }
+        if (auto v = nvs.getInt("mod"))
+        {
+            soundModule_ = static_cast<SoundModule>(v.value());
+        }
+        // if (auto v = nvs.getInt("vol"))
+        // {
+        //     volume_ = v.value();
+        // }
+        if (auto v = nvs.getInt("loop"))
+        {
+            loopCount_ = v.value();
+        }
+        if (auto v = nvs.getBool("shuf"))
+        {
+            shuffleMode_ = v.value();
+        }
+        if (auto v = nvs.getInt("rep"))
+        {
+            repeatMode_ = static_cast<RepeatMode>(v.value());
+        }
+        if (auto v = nvs.getInt("blint"))
+        {
+            backLightIntensity_ = v.value();
+        }
+        if (auto v = nvs.getBool("intsp"))
+        {
+            internalSpeaker_ = v.value();
+        }
+        if (auto v = nvs.getBool("revdispoff"))
+        {
+            displayOffIfReverse_ = v.value();
+        }
+        if (auto v = nvs.getInt("dial"))
+        {
+            playerDial_ = static_cast<PlayerDialMode>(v.value());
+        }
+        if (auto v = nvs.getInt("dsmode"))
+        {
+            deltaSigmaMode_ = static_cast<DeltaSigmaMode>(v.value());
+        }
+        if (auto v = nvs.getInt("288fmvol"))
+        {
+            ymf288FMVol_ = v.value();
+        }
+        if (auto v = nvs.getInt("288ryvol"))
+        {
+            ymf288RhythmVol_ = v.value();
+        }
+        if (auto v = nvs.getInt("neopixmode"))
+        {
+            neoPixelMode_ = static_cast<NeoPixelMode>(v.value());
+        }
+        if (auto v = nvs.getInt("neopixbl"))
+        {
+            neoPixelBrightness_ = v.value();
+        }
+
+        btMIDI_.loadFrom(nvs);
+        btAudio_.loadFrom(nvs);
+    }
+}
+
+////////////
+
+void
+BluetoothMIDI::storeTo(sys::NVSHandler& nvs) const
+{
+    nvs.setInt("btmidi_intmode", static_cast<int>(initialMode));
+}
+
+void
+BluetoothMIDI::loadFrom(sys::NVSHandler& nvs)
+{
+    if (auto v = nvs.getInt("btmidi_intmode"))
+    {
+        initialMode = static_cast<InitialBTMode>(v.value());
+    }
+}
+
+////////////
+
+void
+BluetoothAudio::storeTo(sys::NVSHandler& nvs) const
+{
+    nvs.setInt("bta_intmode", static_cast<int>(initialMode));
+}
+
+void
+BluetoothAudio::loadFrom(sys::NVSHandler& nvs)
+{
+    if (auto v = nvs.getInt("bta_intmode"))
+    {
+        initialMode = static_cast<InitialBTMode>(v.value());
+    }
 }
 
 } // namespace ui

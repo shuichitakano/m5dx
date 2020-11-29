@@ -69,6 +69,15 @@ setup()
     //    dacWrite(25, 0);
     dac_output_disable(DAC_CHANNEL_1);
 
+    if (!target::getButtonA() && !target::getButtonB() && !target::getButtonC())
+    {
+        DBOUT(("reset settings.\n"));
+    }
+    else
+    {
+        ui::SystemSettings::instance().loadFromNVS();
+    }
+
     // i2c initialize
     Wire.begin(21, 22);
 

@@ -478,6 +478,11 @@ SettingWindow::SettingWindow()
     append(&languageItem);
 }
 
+SettingWindow::~SettingWindow()
+{
+    SystemSettings::instance().storeToNVS();
+}
+
 void
 SettingWindow::onUpdate(UpdateContext& ctx)
 {

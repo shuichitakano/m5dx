@@ -8,6 +8,11 @@
 #include "locale.h"
 #include <array>
 
+namespace sys
+{
+class NVSHandler;
+}
+
 namespace ui
 {
 
@@ -71,6 +76,9 @@ struct BluetoothMIDI
 
     void update(const BluetoothADDR& v);
     bool find(const BluetoothADDR& v) const;
+
+    void storeTo(sys::NVSHandler& nvs) const;
+    void loadFrom(sys::NVSHandler& nvs);
 };
 
 struct BluetoothAudio
@@ -82,6 +90,9 @@ struct BluetoothAudio
 
     void update(const BluetoothADDR& v);
     bool find(const BluetoothADDR& v) const;
+
+    void storeTo(sys::NVSHandler& nvs) const;
+    void loadFrom(sys::NVSHandler& nvs);
 };
 
 class SystemSettings
@@ -171,6 +182,9 @@ public:
     void applySoundModuleType() const;
 
     void apply() const;
+
+    void storeToNVS() const;
+    void loadFromNVS();
 
     static SystemSettings& instance();
 };

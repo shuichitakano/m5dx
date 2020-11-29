@@ -16,6 +16,7 @@ class SettingWindow final : public SimpleListWindow
 
 public:
     SettingWindow();
+    ~SettingWindow();
 
     void onUpdate(UpdateContext& ctx) override;
 };
