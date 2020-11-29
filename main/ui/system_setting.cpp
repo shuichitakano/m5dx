@@ -11,6 +11,7 @@
 #include "../debug.h"
 #include "../m5dx_module.h"
 #include <audio/audio.h>
+#include <audio/audio_out.h>
 #include <audio/sound_chip_manager.h>
 #include <graphics/display.h>
 
@@ -49,6 +50,26 @@ updateList(const T& v, size_t n, size_t capacity, T* p)
 }
 
 } // namespace
+
+int
+getSecond(InitialBTMode m)
+{
+    switch (m)
+    {
+    case InitialBTMode::_30SEC:
+        return 30;
+
+    case InitialBTMode::_60SEC:
+        return 60;
+
+    case InitialBTMode::ALWAYS:
+        return -1;
+
+    default:
+        break;
+    }
+    return 0;
+}
 
 void
 BluetoothMIDI::update(const BluetoothADDR& v)
@@ -228,6 +249,24 @@ SystemSettings::applyDeltaSigmaMode() const
 {
     audio::setInternalSpeaker3rdDeltaSigmaMode(deltaSigmaMode_ ==
                                                DeltaSigmaMode::ORDER_3RD);
+}
+
+void
+SystemSettings::applyInternalSpeakerMode() const
+{
+    auto& m = audio::AudioOutDriverManager::instance();
+    if (isEnabledInternalSpeaker())
+    {
+        if (!m.getDriver())
+        {
+            // 何もない時だけ attach する
+            audio::attachInternalSpeaker();
+        }
+    }
+    else
+    {
+        audio::detachInternalSpeaker();
+    }
 }
 
 void

@@ -551,6 +551,16 @@ attachInternalSpeaker()
 }
 
 void
+detachInternalSpeaker()
+{
+    auto& m = AudioOutDriverManager::instance();
+    if (m.getDriver() == &InternalSpeakerOut::instance())
+    {
+        m.setDriver(nullptr);
+    }
+}
+
+void
 setInternalSpeaker3rdDeltaSigmaMode(bool f)
 {
     InternalSpeakerOut::instance().set3rdDeltaSigmaMode(f);
@@ -585,7 +595,7 @@ startFMAudio()
                                     //    setFMClock(8000000, 144);
 
     AudioOutDriverManager::instance().setAudioStreamOut(&streamOutHandler_);
-    attachInternalSpeaker();
+    //    attachInternalSpeaker();
 }
 
 } // namespace audio

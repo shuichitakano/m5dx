@@ -13,6 +13,7 @@
 #include <mutex>
 #include <string.h>
 #include <system/mutex.h>
+#include <system/util.h>
 #include <util/simple_ring_buffer.h>
 
 namespace audio
@@ -77,6 +78,7 @@ public:
                 // !driver_かつFM音源からの読み出しがなくても固まらないようにする
 
                 mutex_.unlock();
+                sys::delay(1);
                 mutex_.lock();
             }
             else
@@ -206,6 +208,12 @@ AudioOutDriverManager::setDriver(AudioOutDriver* d)
     }
 
     pimpl_->signal();
+}
+
+AudioOutDriver*
+AudioOutDriverManager::getDriver() const
+{
+    return pimpl_->driver_;
 }
 
 bool

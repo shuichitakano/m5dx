@@ -179,6 +179,7 @@ KeyboardList::Item::onUpdate(UpdateContext& ctx)
     {
         lv = std::max(0.0f, lv - decPerSec * dt);
     }
+    keyOnTime_ += dt;
 
     bool trigger = soundSys_->getKeyOnTriggerCache() & (1 << ch_);
     if (trigger)
@@ -186,6 +187,7 @@ KeyboardList::Item::onUpdate(UpdateContext& ctx)
         auto lvs      = soundSys_->getChLevel(ch_);
         curLevels_[0] = std::max(curLevels_[0], lvs[0]);
         curLevels_[1] = std::max(curLevels_[1], lvs[1]);
+        keyOnTime_    = 0;
     }
 }
 
@@ -307,7 +309,12 @@ KeyboardList::Item::onRender(RenderContext& ctx)
 
         bool keyOn = soundSys_->getKeyOnChannels() & (1 << ch_);
         keyOn &= enabled;
+
         bool oneShot = sysInfo.oneShotChannelMask & (1 << ch_);
+        if (oneShot && keyOnTime_ > 0.2f)
+        {
+            keyOn = false;
+        }
 
         static std::vector<int8_t> prevOnKeys;
         prevOnKeys.swap(curOnKeys_);

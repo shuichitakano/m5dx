@@ -14,7 +14,10 @@ namespace audio
 void startFMAudio();
 void setFMClock(uint32_t freq);
 void setFMVolume(float v);
+
 void attachInternalSpeaker();
+void detachInternalSpeaker();
+
 void setInternalSpeaker3rdDeltaSigmaMode(bool f);
 
 void setFMAudioModeYM2151();

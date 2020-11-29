@@ -85,8 +85,18 @@ public:
         jobManagerHighPrio_.start(10, 2048, "JobManagerHP");
 
         imu_.initialize();
+
         a2dpManager_.initialize(&jobManagerHighPrio_);
-        //        a2dpManager_.startDiscovery();
+        auto& btSetting = ui::SystemSettings::instance().getBluetoothAudio();
+        if (int initDiscoverTime = getSecond(btSetting.initialMode))
+        {
+            a2dpManager_.startDiscovery(initDiscoverTime);
+        }
+
+        if (ui::SystemSettings::instance().isEnabledInternalSpeaker())
+        {
+            audio::attachInternalSpeaker();
+        }
 
         //
         controlBar_ = std::make_shared<ui::ControlBar>();
