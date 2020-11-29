@@ -34,6 +34,7 @@ class KeyboardList final : public ScrollList
         int curTone_                    = -1;
         int curNote_                    = -1;
         int curNoteSub_                 = -1;
+        float keyOnTime_                = 0;
 
         std::vector<int8_t> curOnKeys_;
 

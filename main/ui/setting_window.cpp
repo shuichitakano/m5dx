@@ -332,6 +332,7 @@ ListItem<bool, 2> internalSpeakerItem(
     [] { return SystemSettings::instance().isEnabledInternalSpeaker(); },
     [](UpdateContext&, auto m) {
         SystemSettings::instance().enableInternalSpeaker(m);
+        SystemSettings::instance().applyInternalSpeakerMode();
     },
     [](auto m) { return getEnableDisableString(m); },
     {false, true});

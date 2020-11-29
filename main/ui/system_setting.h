@@ -67,10 +67,12 @@ struct TrackSetting
 
 using BluetoothADDR = std::array<uint8_t, 6>;
 
+int getSecond(InitialBTMode m);
+
 struct BluetoothMIDI
 {
     static constexpr size_t N_PAIRED_ADDR = 4;
-    InitialBTMode initialMode             = InitialBTMode::_60SEC;
+    InitialBTMode initialMode             = InitialBTMode::_30SEC;
     size_t nAddr                          = 0;
     BluetoothADDR addr[N_PAIRED_ADDR]{};
 
@@ -84,7 +86,7 @@ struct BluetoothMIDI
 struct BluetoothAudio
 {
     static constexpr size_t N_PAIRED_ADDR = 4;
-    InitialBTMode initialMode             = InitialBTMode::_60SEC;
+    InitialBTMode initialMode             = InitialBTMode::_30SEC;
     size_t nAddr                          = 0;
     BluetoothADDR addr[N_PAIRED_ADDR]{};
 
@@ -178,6 +180,8 @@ public:
     //
     void applyBackLightIntensity() const;
     void applyDeltaSigmaMode() const;
+    void applyInternalSpeakerMode() const;
+
     void applyYMF288Volume() const;
     void applySoundModuleType() const;
 

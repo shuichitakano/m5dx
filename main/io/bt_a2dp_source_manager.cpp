@@ -569,6 +569,7 @@ BTA2DPSourceManager::initialize(sys::JobManager* jm)
 void
 BTA2DPSourceManager::startDiscovery(int seconds)
 {
+    // todo: -1 がきたら継続で discovery する
     std::lock_guard<sys::Mutex> lock(getMutex());
 
     DBOUT(("Starting device discovery...\n"));
