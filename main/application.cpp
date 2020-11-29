@@ -16,6 +16,7 @@
 #include <graphics/texture.h>
 #include <io/bt_a2dp_source_manager.h>
 #include <io/file_util.h>
+#include <io/imu.h>
 #include <memory>
 #include <music_player/music_player_manager.h>
 #include <system/job_manager.h>
@@ -54,6 +55,10 @@ struct App
     std::shared_ptr<ui::ControlBar> controlBar_;
 
     io::BTA2DPSourceManager a2dpManager_;
+    io::IMU imu_;
+
+    bool renderingEnabled_ = true;
+    bool backlightEnabled_ = true;
 
     uint32_t currentTimer_ = 0;
 
@@ -61,7 +66,6 @@ public:
     App()
     {
 #if 0
-        // todo: フォントはコード埋め込みに変更する
         static std::vector<uint8_t> fontAsciiBin;
         static std::vector<uint8_t> fontKanjiBin;
         io::readFile(fontAsciiBin, "/data/4x8_font.bin");
@@ -80,6 +84,7 @@ public:
         //
         jobManagerHighPrio_.start(10, 2048, "JobManagerHP");
 
+        imu_.initialize();
         a2dpManager_.initialize(&jobManagerHighPrio_);
         //        a2dpManager_.startDiscovery();
 
@@ -105,14 +110,35 @@ public:
             int dial     = 0;
             bool trigger = false;
 
-            target::startI2C();
-            Wire.requestFrom(0x62, 2);
-            while (Wire.available())
             {
-                dial += (int8_t)Wire.read();
-                trigger |= Wire.read() != 255;
+                target::startI2C();
+
+                Wire.requestFrom(0x62, 2);
+                while (Wire.available())
+                {
+                    dial += (int8_t)Wire.read();
+                    trigger |= Wire.read() != 255;
+                }
+
+                if (ui::SystemSettings::instance()
+                        .isEnabledDisplayOffIfReverse())
+                {
+                    imu_.update(true, false, false, false);
+
+                    constexpr float threshold0 = -0.75f;
+                    constexpr float threshold1 = -0.65f;
+
+                    renderingEnabled_ =
+                        imu_.getAccel()[2] >
+                        (renderingEnabled_ ? threshold0 : threshold1);
+                }
+                else
+                {
+                    renderingEnabled_ = true;
+                }
+
+                target::endI2C();
             }
-            target::endI2C();
 
             keyState_.update(!target::getButtonA(),
                              !target::getButtonB(),
@@ -131,7 +157,15 @@ public:
             float vol = expf(ss.getVolume() * 0.11512925464970229f);
             audioOut.setVolume(vol);
         }
+
+        if (renderingEnabled_)
         {
+            if (!backlightEnabled_)
+            {
+                ui::SystemSettings::instance().applyBackLightIntensity();
+                backlightEnabled_ = true;
+            }
+
             ui::RenderContext ctx;
             ctx.setFrameBuffer(&graphics::getDisplay());
             ctx.setTexture(&texture_);
@@ -144,6 +178,16 @@ public:
             drawDebug(ctx);
 
             audio::dumpFMDataDebug();
+        }
+        else
+        {
+            if (backlightEnabled_)
+            {
+                graphics::getDisplay().setBackLightIntensity(0);
+                backlightEnabled_ = false;
+            }
+
+            delay(100);
         }
     }
 

@@ -11,10 +11,9 @@
 #include <io/file_util.h>
 #include <utility/Config.h>
 #include <utility>
+#include <wire.h>
 
 #include <driver/dac.h>
-
-#include <utility/MPU9250.h>
 
 #include <dirent.h>
 
@@ -38,11 +37,6 @@
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
-
-namespace
-{
-MPU9250 IMU;
-} // namespace
 
 // The setup routine runs once when M5Stack starts up
 void
@@ -90,10 +84,6 @@ setup()
     // SoundChip 初期化後
     audio::AudioOutDriverManager::instance().start();
     audio::startFMAudio();
-
-    IMU.calibrateMPU9250(IMU.gyroBias, IMU.accelBias);
-    IMU.initMPU9250();
-    IMU.initAK8963(IMU.magCalibration);
 
     // bt
     if (!io::initializeBluetooth() || !io::BLEManager::instance().initialize())
@@ -150,72 +140,11 @@ setup()
 #endif
 }
 
-void
-testIMU()
-{
-    if (IMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
-    {
-        IMU.readAccelData(IMU.accelCount);
-        IMU.getAres();
-
-        IMU.ax = (float)IMU.accelCount[0] * IMU.aRes; // - accelBias[0];
-        IMU.ay = (float)IMU.accelCount[1] * IMU.aRes; // - accelBias[1];
-        IMU.az = (float)IMU.accelCount[2] * IMU.aRes; // - accelBias[2];
-
-        IMU.readGyroData(IMU.gyroCount); // Read the x/y/z adc values
-        IMU.getGres();
-
-        IMU.gx = (float)IMU.gyroCount[0] * IMU.gRes;
-        IMU.gy = (float)IMU.gyroCount[1] * IMU.gRes;
-        IMU.gz = (float)IMU.gyroCount[2] * IMU.gRes;
-
-        IMU.readMagData(IMU.magCount); // Read the x/y/z adc values
-        IMU.getMres();
-
-        IMU.mx = (float)IMU.magCount[0] * IMU.mRes * IMU.magCalibration[0] -
-                 IMU.magbias[0];
-        IMU.my = (float)IMU.magCount[1] * IMU.mRes * IMU.magCalibration[1] -
-                 IMU.magbias[1];
-        IMU.mz = (float)IMU.magCount[2] * IMU.mRes * IMU.magCalibration[2] -
-                 IMU.magbias[2];
-
-        IMU.tempCount   = IMU.readTempData(); // Read the adc values
-        IMU.temperature = ((float)IMU.tempCount) / 333.87 + 21.0;
-
-        DBOUT(("(%d, %d, %d)mg (%d, %d, %d)o/s (%d, %d, %d)mG %fdeg\n",
-               (int)(IMU.ax * 1000),
-               (int)(IMU.ay * 1000),
-               (int)(IMU.az * 1000),
-               (int)(IMU.gx),
-               (int)(IMU.gy),
-               (int)(IMU.gz),
-               (int)(IMU.mx),
-               (int)(IMU.my),
-               (int)(IMU.mz),
-               IMU.temperature));
-    }
-}
-
-void
-testPlus()
-{
-    Wire.requestFrom(0x62, 2);
-    while (Wire.available())
-    {
-        auto ct    = Wire.read();
-        auto press = Wire.read();
-        DBOUT(("count %d, pressed %d\n", ct, press));
-    }
-}
-
 // The loop routine runs over and over again forever
 void
 loop()
 {
     M5DX::tick();
-
-    //    testIMU();
-    //    testPlus();
 
     static int counter = 0;
     ++counter;

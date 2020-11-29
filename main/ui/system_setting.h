@@ -105,7 +105,7 @@ class SystemSettings
     RepeatMode repeatMode_    = RepeatMode::ALL;
     int backLightIntensity_   = 30;
     bool internalSpeaker_     = true;
-    bool displayOffIfReverse_ = true; // 反転で画面オフ
+    bool displayOffIfReverse_ = false; // 反転で画面オフ
     //    PlayerDialMode playerDial_     = PlayerDialMode::VOLUME;
     PlayerDialMode playerDial_     = PlayerDialMode::TRACK_SELECT;
     DeltaSigmaMode deltaSigmaMode_ = DeltaSigmaMode::ORDER_3RD;
