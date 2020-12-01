@@ -281,6 +281,8 @@ private:
     util::RingBuffer<int16_t> ring_{buffer_, BUFFER_SIZE};
     SimpleLinearSamplingRateConverter src_;
 
+    int nextSampleRate_ = 0;
+
 public:
     FMOutputHandler() { install(); }
     ~FMOutputHandler() { uninstall(); }
@@ -325,19 +327,23 @@ public:
         setSampleRate(sampleRate);
     }
 
-    void setSampleRate(uint32_t sampleRate)
-    {
-        if (installed_)
-        {
-            auto r = i2s_set_sample_rates(port_, sampleRate);
-            assert(r == ESP_OK);
-            sampleRate_ = sampleRate;
-
-            src_.setSamplingStep(sampleRate / (float)DEFAULT_SAMPLE_RATE);
-        }
-    }
+    void setSampleRate(uint32_t sampleRate) { nextSampleRate_ = sampleRate; }
 
     uint32_t getSampleRate() const { return sampleRate_; }
+
+    void applyChanges()
+    {
+        if (nextSampleRate_)
+        {
+            sampleRate_ = nextSampleRate_;
+            auto r      = i2s_set_sample_rates(port_, sampleRate_);
+            assert(r == ESP_OK);
+
+            src_.setSamplingStep(sampleRate_ / (float)DEFAULT_SAMPLE_RATE);
+
+            nextSampleRate_ = 0;
+        }
+    }
 
     void read(uint32_t* buf, size_t n)
     {
@@ -514,6 +520,7 @@ public:
         memset(data, 0, nSamples * sizeof(std::array<int32_t, 2>));
 
         auto& fm = FMOutputHandler::instance();
+        fm.applyChanges();
         fm.accum(data, nSamples, sampleRate);
 
         getSampleGeneratorManager().setSampleRate(sampleRate);

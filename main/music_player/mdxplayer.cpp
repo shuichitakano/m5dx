@@ -139,6 +139,7 @@ MDXPlayer::start()
     auto pcm8 = (UBYTE*)MXDRV_GetWork(MXDRV_WORK_PCM8);
     *pcm8     = 1;
 
+    DBOUT(("MDXPlayer started."));
     return true;
 }
 
@@ -167,6 +168,7 @@ MDXPlayer::load(const char* filename)
 bool
 MDXPlayer::play(int)
 {
+    DBOUT(("MDXPlayer::play\n"));
     MXDRV_Stop();
 
     void* pdx = pdx_.size() ? &pdx_[0] : 0;

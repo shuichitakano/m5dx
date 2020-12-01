@@ -84,6 +84,7 @@ terminateActiveMusicPlayerWithout(MusicPlayer* without)
 void
 setActiveMusicPlayer(MusicPlayer* p)
 {
+    DBOUT(("setActiveMusicPlayer %p\n", p));
     std::lock_guard<sys::Mutex> lock(mutex_);
     activeMusicPlayer_ = p;
 }
@@ -97,6 +98,7 @@ getActiveMusicPlayer()
 bool
 playMusicFile(const char* filename, int track, bool terminateOld)
 {
+    DBOUT(("playMusicFile %s, %d\n", filename, track));
     std::lock_guard<sys::Mutex> lock(mutex_);
 
     auto* player = findMusicPlayerFromFile(filename);
@@ -110,6 +112,7 @@ playMusicFile(const char* filename, int track, bool terminateOld)
         terminateActiveMusicPlayerWithout(player);
     }
 
+    DBOUT(("start player.\n"));
     player->start();
 
     if (!player->load(filename))
