@@ -50,10 +50,11 @@ public:
         eventGroupHandle_ = xEventGroupCreate();
         assert(eventGroupHandle_);
 
-        static constexpr int prio = 21;
+        static constexpr int prio = 11;
+        //        static constexpr int prio = 21;
         xTaskCreate([](void* p) { ((Impl*)p)->task(); },
                     "AudioOut",
-                    2048,
+                    1024 * 3,
                     this,
                     prio,
                     &taskHandle_);

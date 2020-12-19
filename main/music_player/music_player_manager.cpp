@@ -9,7 +9,6 @@
 #include <debug.h>
 #include <music_player/mdxplayer.h>
 #include <music_player/s98player.h>
-#include <mutex>
 #include <string>
 #include <system/mutex.h>
 #include <ui/system_setting.h>
@@ -114,6 +113,7 @@ playMusicFile(const char* filename, int track, bool terminateOld)
 
     DBOUT(("start player.\n"));
     player->start();
+    player->stop();
 
     if (!player->load(filename))
     {
@@ -129,6 +129,7 @@ playMusicFile(const char* filename, int track, bool terminateOld)
 void
 tickMusicPlayerManager()
 {
+    std::lock_guard<sys::Mutex> lock(mutex_);
     auto player = getActiveMusicPlayer();
     if (player)
     {

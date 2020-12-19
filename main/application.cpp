@@ -82,16 +82,20 @@ public:
             GET_LINKED_BINARY_T(graphics::BMP, m5dx_material_bmp));
 
         //
-        jobManagerHighPrio_.start(10, 2048, "JobManagerHP");
+        jobManagerHighPrio_.start(12, 2048, "JobManagerHP");
 
         imu_.initialize();
 
         a2dpManager_.initialize(&jobManagerHighPrio_);
+        registerRemoteCallback();
+        a2dpManager_.enableConnection();
+#if 0
         auto& btSetting = ui::SystemSettings::instance().getBluetoothAudio();
         if (int initDiscoverTime = getSecond(btSetting.initialMode))
         {
             a2dpManager_.startDiscovery(initDiscoverTime);
         }
+#endif
 
         if (ui::SystemSettings::instance().isEnabledInternalSpeaker())
         {
@@ -106,6 +110,40 @@ public:
         ui::SystemSettings::instance().apply();
 
         currentTimer_ = sys::millis();
+    }
+
+    void registerRemoteCallback()
+    {
+        using RC = io::BTA2DPSourceManager::RemoteCommand;
+        a2dpManager_.setRemoteCommandCallback(RC::PLAY, [] {
+            std::lock_guard<sys::Mutex> lock(music_player::getMutex());
+            if (auto* mp = music_player::getActiveMusicPlayer())
+            {
+                mp->play();
+            }
+        });
+        a2dpManager_.setRemoteCommandCallback(RC::STOP, [] {
+            std::lock_guard<sys::Mutex> lock(music_player::getMutex());
+            if (auto* mp = music_player::getActiveMusicPlayer())
+            {
+                mp->stop();
+            }
+        });
+        a2dpManager_.setRemoteCommandCallback(RC::PAUSE, [] {
+            std::lock_guard<sys::Mutex> lock(music_player::getMutex());
+            if (auto* mp = music_player::getActiveMusicPlayer())
+            {
+                mp->pause();
+            }
+        });
+        a2dpManager_.setRemoteCommandCallback(RC::BACKWARD, [] {
+            std::lock_guard<sys::Mutex> lock(music_player::getMutex());
+            music_player::prevPlayList();
+        });
+        a2dpManager_.setRemoteCommandCallback(RC::FORWARD, [] {
+            std::lock_guard<sys::Mutex> lock(music_player::getMutex());
+            music_player::nextPlayList(true);
+        });
     }
 
     void tick()

@@ -71,7 +71,8 @@ public:
         config.counter_en  = TIMER_PAUSE;
         config.alarm_en    = TIMER_ALARM_EN;
         config.intr_type   = TIMER_INTR_LEVEL;
-        config.auto_reload = autoReload;
+        config.auto_reload =
+            autoReload ? TIMER_AUTORELOAD_EN : TIMER_AUTORELOAD_DIS;
         timer_init(timerGrp_, timerIdx_, &config);
 
         currentAutoReload_ = autoReload;

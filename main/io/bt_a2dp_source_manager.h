@@ -6,6 +6,7 @@
 #define BC85C0A5_7134_139A_17D1_D501102E805C
 
 #include <array>
+#include <functional>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -35,11 +36,24 @@ public:
 
     using EntryContainer = std::set<Entry>;
 
+    enum class RemoteCommand
+    {
+        PLAY,
+        STOP,
+        PAUSE,
+        FORWARD,
+        BACKWARD,
+
+        MAX,
+    };
+
 public:
     void initialize(sys::JobManager* jm);
 
     void startDiscovery(int seconds);
     void stopDiscovery();
+
+    void enableConnection();
 
     void connect(const Addr& addr);
     void cancelConnect();
@@ -49,6 +63,9 @@ public:
 
     sys::Mutex& getMutex();
     const EntryContainer& getEntries() const;
+
+    void setRemoteCommandCallback(RemoteCommand cmd,
+                                  std::function<void()>&& cb);
 
     static BTA2DPSourceManager& instance();
 };

@@ -36,7 +36,7 @@ namespace sound_sys
         M6258_TBL_VAL(15, i)
 
 #define M6258_TBL_VAL(x, i)                                                    \
-    ((M6258_GET_DELTA(x, i) << 16) | (M6258_GET_NEXTI(x, i)))
+    (((uint16_t)(M6258_GET_DELTA(x, i)) << 16) | (M6258_GET_NEXTI(x, i)))
 
 #define M6258_GET_DELTA(x, i)                                                  \
     M6258_ADJ_SIGN(x, M6258_GET_PRED_VEC(i) * M6258_GET_SCALE(x) >> 3)
