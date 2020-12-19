@@ -330,7 +330,7 @@ PlayerWindow::onRender(RenderContext& ctx)
             }
             else
             {
-                char tmp[10];
+                char tmp[16];
                 snprintf(tmp, sizeof(tmp), "%d", loop);
                 ctx.putTextureText("@",
                                    '@',
@@ -368,7 +368,7 @@ PlayerWindow::onRender(RenderContext& ctx)
             }
             else
             {
-                char tmp[10];
+                char tmp[16];
                 snprintf(tmp, sizeof(tmp), "%02d", song);
                 ctx.putTextureText("@",
                                    '@',
@@ -396,7 +396,7 @@ PlayerWindow::onRender(RenderContext& ctx)
             }
             else
             {
-                char tmp[10];
+                char tmp[16];
                 snprintf(tmp, sizeof(tmp), "%02d:%02d", time / 60, time % 60);
                 ctx.putTextureText(tmp,
                                    '0',
@@ -518,7 +518,7 @@ PlayerWindow::onRender(RenderContext& ctx)
         {
             auto& ss = SystemSettings::instance();
             int vol  = ss.getVolume();
-            char buf[10];
+            char buf[16];
             snprintf(buf, sizeof(buf), "%ddB", vol);
             ctx.setFontColor(0xffffff);
             ctx.putText(buf, rect::vol.pos, rect::vol.size);

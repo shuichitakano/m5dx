@@ -349,6 +349,7 @@ public:
     {
         size_t bytesRead;
         i2s_read(port_, buf, n * bytesPerSample_, &bytesRead, portMAX_DELAY);
+        // i2s_read(port_, buf, n * bytesPerSample_, &bytesRead, (TickType_t)1);
     }
 
     size_t decode(uint32_t* buf, size_t n)
@@ -458,6 +459,7 @@ FMOutputHandler::install(int bitsPerSample, int bytesPerSample)
         cfg.communication_format =
             i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB);
         cfg.intr_alloc_flags = 0;
+        // cfg.intr_alloc_flags = ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL3;
         //        cfg.intr_alloc_flags = ESP_INTR_FLAG_LEVEL3;
         cfg.dma_buf_count = 4;
         cfg.dma_buf_len   = 128; // sample数
@@ -592,17 +594,12 @@ setFMAudioModeYMF288()
 void
 startFMAudio()
 {
-    //    target::startFMClock(4000000);
-    // target::startFMClock(8000000);
-    //    resetSoundChip(); // FMOutputHandlerを動かす前に
-
     InternalSpeakerOut::instance(); // init
     FMOutputHandler::instance();    // init
                                     //    setFMClock(4000000, 64);
                                     //    setFMClock(8000000, 144);
 
     AudioOutDriverManager::instance().setAudioStreamOut(&streamOutHandler_);
-    //    attachInternalSpeaker();
 }
 
 } // namespace audio

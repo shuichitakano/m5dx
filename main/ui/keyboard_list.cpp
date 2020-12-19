@@ -266,7 +266,7 @@ KeyboardList::Item::onRender(RenderContext& ctx)
         ctx.fill(rect::bg, colBG);
 
         ctx.putTextureTrans(pos::iconCH, tex::iconCH);
-        char tmp[8];
+        char tmp[16];
         snprintf(tmp, sizeof(tmp), "%02d", std::min(99, idx + 1));
         ctx.putTextureText(tmp,
                            '0',
@@ -436,7 +436,7 @@ KeyboardList::Item::onRender(RenderContext& ctx)
         }
         else
         {
-            char tmp[10];
+            char tmp[16];
             snprintf(tmp, sizeof(tmp), "%02d", std::min(99, tone));
             ctx.putTextureText(
                 "@", '@', pos::iconTone, tex::font6x7, col::status, colBG);
@@ -456,7 +456,7 @@ KeyboardList::Item::onRender(RenderContext& ctx)
         }
         else
         {
-            char tmp[10];
+            char tmp[16];
             snprintf(tmp,
                      sizeof(tmp),
                      "%02d%c%02d",
